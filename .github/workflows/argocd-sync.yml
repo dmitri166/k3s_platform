@@ -23,6 +23,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        repository: dmitr/talos_platform
+        token: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Setup kubectl
       uses: azure/setup-kubectl@v3

@@ -21,7 +21,7 @@ server:
   config:
     repositories:
       talos_platform:
-        url: https://github.com/yourusername/talos_platform.git
+        url: https://github.com/dmitr/talos_platform.git
         type: git
   service:
     type: LoadBalancer

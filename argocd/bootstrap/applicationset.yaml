@@ -48,7 +48,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/yourusername/talos_platform.git
+        repoURL: https://github.com/dmitr/talos_platform.git
         targetRevision: HEAD
         path: '{{path}}'
       destination:

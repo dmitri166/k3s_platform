@@ -69,6 +69,14 @@ audit:
 storage:
   enabled: true
   type: file
+  path: /vault/data
+
+# Persistent volume for Vault data
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClass: "standard"
+  accessMode: ReadWriteOnce
 
 # Enable metrics
 metrics:
@@ -87,9 +95,15 @@ podSecurityPolicy:
 # Enable service account
 serviceAccount:
   create: true
-  annotations:
-    iam.amazonaws.com/permitted: "true"
 
 # Enable RBAC
 rbac:
   create: true
+
+# On-premises specific configuration
+server:
+  extraEnv:
+    - name: VAULT_ADDR
+      value: "http://vault.vault.svc.cluster.local:8200"
+    - name: VAULT_API_ADDR
+      value: "http://vault.vault.svc.cluster.local:8200"

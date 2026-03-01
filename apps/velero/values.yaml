@@ -41,6 +41,20 @@ nodeAgent:
       cpu: 500m
       memory: 512Mi
 
+# Configure local storage for on-premises
+defaultVolumesToFsBackup: true
+defaultBackupLocation: "default"
+defaultVolumesSnapshotLocation: "default"
+
+# Storage configuration
+defaultBackupStorageLocation: "default"
+defaultVolumeSnapshotLocation: "default"
+defaultVolumesToFsBackup: true
+
+# Storage class configuration
+defaultStorageClass: "standard"
+defaultStorageClassPriority: 0
+
 # Enable schedules
 schedules:
   enabled: true
@@ -60,18 +74,25 @@ metrics:
   serviceMonitor:
     enabled: true
 
+# Enable snapshots
+snapshots:
+  enabled: true
+
+# Enable upgrade
+upgrade:
+  enabled: true
+
 # Configuration
 configuration:
-  provider: aws
+  provider: local
   backupStorageLocation:
     name: default
-    bucket: velero-backups
     config:
-      region: us-east-1
+      path: /var/velero-backups
   volumeSnapshotLocation:
     name: default
     config:
-      region: us-east-1
+      path: /var/velero-snapshots
 
 # Enable snapshots
 snapshots:
