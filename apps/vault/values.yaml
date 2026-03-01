@@ -1,0 +1,95 @@
+# Vault OSS secrets management configuration
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Enable Vault
+vault:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Enable UI
+ui:
+  enabled: true
+  serviceType: LoadBalancer
+  loadBalancerIP: 192.168.1.244
+  annotations:
+    metallb.universe.tf/address-pool: default
+
+# Enable injector
+injector:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Enable server
+server:
+  enabled: true
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Enable dev mode for testing
+global:
+  dev: false
+
+# Enable authentication
+auth:
+  enabled: true
+
+# Enable secrets engine
+secrets:
+  enabled: true
+
+# Enable audit
+audit:
+  enabled: true
+
+# Enable storage
+storage:
+  enabled: true
+  type: file
+
+# Enable metrics
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+
+# Enable network policies
+networkPolicy:
+  enabled: true
+
+# Enable pod security
+podSecurityPolicy:
+  enabled: false
+
+# Enable service account
+serviceAccount:
+  create: true
+  annotations:
+    iam.amazonaws.com/permitted: "true"
+
+# Enable RBAC
+rbac:
+  create: true

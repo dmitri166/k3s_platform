@@ -1,0 +1,66 @@
+# Falco runtime security monitoring configuration
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Enable Falco
+falco:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Enable drivers
+driver:
+  enabled: true
+  kind: ebpf
+
+# Enable kubernetes integration
+kubernetes:
+  enabled: true
+
+# Enable audit log
+auditLog:
+  enabled: true
+
+# Enable syscall events
+syscallEvents:
+  enabled: true
+
+# Enable metrics
+metrics:
+  enabled: true
+  port: 8765
+  serviceMonitor:
+    enabled: true
+
+# Enable web UI
+falcoUI:
+  enabled: false  # Disable for resource optimization
+
+# Enable grpc
+grpc:
+  enabled: true
+  port: 5060
+
+# Enable collectors
+collectors:
+  enabled: true
+  kubernetesAudit: true
+  kubernetesMetadata: true
+
+# Enable outputs
+outputs:
+  enabled: true
+  syslog: false
+  stdout: true
+  file: false

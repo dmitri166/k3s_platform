@@ -1,0 +1,94 @@
+# Prometheus monitoring stack configuration
+prometheus:
+  server:
+    enabled: true
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    retention: 7d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "standard"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 8Gi
+
+alertmanager:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+grafana:
+  enabled: true
+  service:
+    type: LoadBalancer
+    loadBalancerIP: 192.168.1.242
+    annotations:
+      metallb.universe.tf/address-pool: default
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  adminPassword: "admin123"
+  sidecar:
+    datasources:
+      enabled: true
+    dashboards:
+      enabled: true
+
+nodeExporter:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+kubeStateMetrics:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+defaultRules:
+  create: true
+
+kubeProxy:
+  enabled: true
+
+kubeEtcd:
+  enabled: true
+
+kubeScheduler:
+  enabled: true
+
+kubeControllerManager:
+  enabled: true
+
+# Disable Backstage for resource optimization
+backstage:
+  enabled: false
+
+# Disable Kubecost for resource optimization
+kubecost:
+  enabled: false

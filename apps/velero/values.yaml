@@ -1,0 +1,82 @@
+# Velero backup and restore configuration
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+      memory: 512Mi
+
+# Enable Velero
+velero:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Enable restic
+restic:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Enable node agent
+nodeAgent:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Enable schedules
+schedules:
+  enabled: true
+
+# Enable backups
+backups:
+  enabled: true
+  ttl: "720h0m0s"  # 30 days
+
+# Enable restores
+restores:
+  enabled: true
+
+# Enable metrics
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+
+# Configuration
+configuration:
+  provider: aws
+  backupStorageLocation:
+    name: default
+    bucket: velero-backups
+    config:
+      region: us-east-1
+  volumeSnapshotLocation:
+    name: default
+    config:
+      region: us-east-1
+
+# Enable snapshots
+snapshots:
+  enabled: true
+
+# Enable upgrade
+upgrade:
+  enabled: true

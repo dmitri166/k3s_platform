@@ -1,0 +1,121 @@
+# ArgoCD configuration values
+global:
+  image:
+    repository: quay.io/argoproj/argocd
+    tag: v2.8.0
+  imagePullPolicy: IfNotPresent
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 999
+    fsGroup: 999
+
+server:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  config:
+    repositories:
+      talos_platform:
+        url: https://github.com/yourusername/talos_platform.git
+        type: git
+  service:
+    type: LoadBalancer
+    loadBalancerIP: 192.168.1.240
+    ports:
+      http: 80
+      https: 443
+    annotations:
+      metallb.universe.tf/address-pool: default
+
+repoServer:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+applicationSet:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+configs:
+  cm:
+    timeout.reconciliation: 180s
+    application.resourceTrackingMethod: annotation
+    statusbadge.application.enabled: true
+  params:
+    server.insecure: true
+    application.instance.label.key: argocd.argoproj.io/instance
+    application.instance.label.value: '{{.Values.apps.instanceLabelKey}}'
+
+rbac:
+  create: true
+  defaultPolicy: role:readonly
+  policy.csv: |
+    p, role:admin, applications, *, */*, allow
+    p, role:admin, clusters, *, *, allow
+    p, role:admin, repositories, *, *, allow
+
+# Enable metrics
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: argocd
+    labels:
+      release: prometheus
+
+# Enable network policies
+networkPolicy:
+  enabled: true
+
+# Enable pod security
+podSecurityPolicy:
+  enabled: false
+
+# Enable service account
+serviceAccount:
+  create: true
+  annotations:
+    iam.amazonaws.com/permitted: "true"
+
+# Enable RBAC
+rbac:
+  create: true
+
+# Enable ingress
+ingress:
+  enabled: false  # Using LoadBalancer instead
+
+# Enable certificates
+certs:
+  secret:
+    annotations:
+      argocd.argoproj.io/sync-options: CreateNamespace=true

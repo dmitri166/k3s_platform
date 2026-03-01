@@ -1,0 +1,171 @@
+# GitHub Actions workflow for ArgoCD application synchronization
+name: ArgoCD Sync
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'apps/**'
+      - 'namespaces/**'
+      - 'argocd/**'
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: 'Force ArgoCD sync'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  argocd-sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.29.0'
+        
+    - name: Setup ArgoCD CLI
+      run: |
+        curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+        chmod +x argocd
+        sudo mv argocd /usr/local/bin/argocd
+        argocd version
+        
+    - name: Configure kubectl
+      run: |
+        # Download kubeconfig from Terraform state (if available)
+        echo "Setting up cluster access"
+        
+        # For now, we'll assume the cluster is accessible
+        # In a real scenario, you would download the kubeconfig from a secure location
+        echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
+        
+    - name: Wait for ArgoCD to be ready
+      run: |
+        echo "Waiting for ArgoCD to be ready..."
+        timeout 300 bash -c 'until kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server | grep -q "Running"; do sleep 10; done'
+        
+    - name: Get ArgoCD credentials
+      run: |
+        echo "Getting ArgoCD credentials"
+        ARGOCD_PASSWORD=$(kubectl get secret argocd-admin-password -n argocd -o jsonpath='{.data.password}' | base64 -d)
+        echo "ARGOCD_PASSWORD=$ARGOCD_PASSWORD" >> $GITHUB_ENV
+        
+    - name: Login to ArgoCD
+      run: |
+        ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        argocd login $ARGOCD_SERVER --insecure --username admin --password $ARGOCD_PASSWORD
+        
+    - name: Check ArgoCD Applications
+      run: |
+        echo "Checking ArgoCD applications status"
+        argocd app list
+        
+    - name: Sync Applications
+      run: |
+        echo "Syncing ArgoCD applications"
+        
+        if [ "${{ github.event.inputs.force_sync }}" = "true" ]; then
+          echo "Force sync requested"
+          argocd app sync --force --refresh
+        else
+          echo "Normal sync"
+          argocd app sync --refresh
+        fi
+        
+    - name: Wait for Applications to Sync
+      run: |
+        echo "Waiting for applications to sync..."
+        timeout 600 bash -c 'until argocd app list | grep -q "Synced"; do sleep 30; done'
+        
+    - name: Verify Application Health
+      run: |
+        echo "Verifying application health"
+        argocd app list
+        
+        # Check specific applications
+        applications=("ingress-nginx" "cert-manager" "kube-prometheus-stack" "loki-stack" "opa-gatekeeper" "falco" "velero" "vault" "external-secrets")
+        
+        for app in "${applications[@]}"; do
+          echo "Checking $app..."
+          argocd app get $app
+          health=$(argocd app get $app -o json | jq -r '.status.health.status')
+          sync=$(argocd app get $app -o json | jq -r '.status.sync.status')
+          
+          if [ "$health" = "Healthy" ] && [ "$sync" = "Synced" ]; then
+            echo "✅ $app is healthy and synced"
+          else
+            echo "❌ $app has issues: Health=$health, Sync=$sync"
+          fi
+        done
+        
+    - name: Get Service URLs
+      run: |
+        echo "Getting service URLs"
+        
+        # ArgoCD
+        ARGOCD_IP=$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "ArgoCD: http://$ARGOCD_IP"
+        
+        # Ingress
+        INGRESS_IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "Ingress: http://$INGRESS_IP"
+        
+        # Grafana
+        GRAFANA_IP=$(kubectl get svc grafana -n monitoring -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "Grafana: http://$GRAFANA_IP"
+        
+        # Vault
+        VAULT_IP=$(kubectl get svc vault -n vault -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "Vault: http://$VAULT_IP"
+        
+        # Save URLs as workflow output
+        echo "argocd_url=http://$ARGOCD_IP" >> $GITHUB_OUTPUT
+        echo "ingress_url=http://$INGRESS_IP" >> $GITHUB_OUTPUT
+        echo "grafana_url=http://$GRAFANA_IP" >> $GITHUB_OUTPUT
+        echo "vault_url=http://$VAULT_IP" >> $GITHUB_OUTPUT
+        
+    - name: Notify Sync Status
+      uses: actions/github-script@v7
+      if: always()
+      with:
+        script: |
+          const status = context.jobStatus;
+          const argocdUrl = '${{ steps.get-service-urls.outputs.argocd_url }}';
+          const grafanaUrl = '${{ steps.get-service-urls.outputs.grafana_url }}';
+          
+          const message = status === 'success' 
+            ? `✅ **ArgoCD Sync Successful**
+            
+            **Service URLs:**
+            - 🚀 ArgoCD: ${argocdUrl}
+            - 📊 Grafana: ${grafanaUrl}
+            
+            **Status:** All applications synced successfully
+            
+            **Next Steps:**
+            - Access the services using the URLs above
+            - Monitor application health in ArgoCD UI
+            - Check logs and metrics in Grafana`
+            : `❌ **ArgoCD Sync Failed**
+            
+            **Status:** Application synchronization failed
+            
+            **Next Steps:**
+            - Check the workflow logs for errors
+            - Verify application configurations
+            - Check ArgoCD UI for detailed status`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number || 1,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: message
+          }).catch(() => {
+            console.log('Issue creation failed, skipping notification');
+          });

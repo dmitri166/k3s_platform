@@ -1,0 +1,69 @@
+# ArgoCD ApplicationSet for bootstrapping all platform applications
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: talos-platform-apps
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - name: namespaces
+        path: namespaces
+        namespace: argocd
+      - name: ingress-nginx
+        path: apps/ingress-nginx
+        namespace: ingress-nginx
+      - name: cert-manager
+        path: apps/cert-manager
+        namespace: cert-manager
+      - name: kube-prometheus-stack
+        path: apps/kube-prometheus-stack
+        namespace: monitoring
+      - name: loki-stack
+        path: apps/loki-stack
+        namespace: monitoring
+      - name: opa-gatekeeper
+        path: apps/opa-gatekeeper
+        namespace: gatekeeper-system
+      - name: falco
+        path: apps/falco
+        namespace: falco
+      - name: velero
+        path: apps/velero
+        namespace: velero
+      - name: vault
+        path: apps/vault
+        namespace: vault
+      - name: external-secrets
+        path: apps/external-secrets
+        namespace: external-secrets
+  template:
+    metadata:
+      name: '{{path}}'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/name: '{{path}}'
+        app.kubernetes.io/part-of: talos-platform
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/yourusername/talos_platform.git
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+        - PrunePropagationPolicy=foreground
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m

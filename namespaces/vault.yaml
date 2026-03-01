@@ -1,0 +1,53 @@
+# Vault namespace configuration
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vault
+  labels:
+    name: vault
+    app.kubernetes.io/part-of: talos-platform
+    environment: development
+    purpose: secrets-services
+  annotations:
+    argocd.argoproj.io/sync-options: CreateNamespace=true
+---
+# Resource quota for vault namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: vault-quota
+  namespace: vault
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+    persistentvolumeclaims: "5"
+    pods: "10"
+    services: "5"
+    secrets: "20"
+    configmaps: "5"
+---
+# Limit range for vault namespace
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: vault-limits
+  namespace: vault
+spec:
+  limits:
+  - default:
+      cpu: 250m
+      memory: 256Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 128Mi
+    type: Container
+  - max:
+      cpu: 500m
+      memory: 512Mi
+    min:
+      cpu: 50m
+      memory: 64Mi
+    type: Container

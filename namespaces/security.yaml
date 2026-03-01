@@ -1,0 +1,53 @@
+# Security namespace configuration
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security
+  labels:
+    name: security
+    app.kubernetes.io/part-of: talos-platform
+    environment: development
+    purpose: security-services
+  annotations:
+    argocd.argoproj.io/sync-options: CreateNamespace=true
+---
+# Resource quota for security namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: security-quota
+  namespace: security
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 2Gi
+    limits.cpu: "4"
+    limits.memory: 4Gi
+    persistentvolumeclaims: "5"
+    pods: "20"
+    services: "10"
+    secrets: "20"
+    configmaps: "10"
+---
+# Limit range for security namespace
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: security-limits
+  namespace: security
+spec:
+  limits:
+  - default:
+      cpu: 200m
+      memory: 256Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 128Mi
+    type: Container
+  - max:
+      cpu: 500m
+      memory: 512Mi
+    min:
+      cpu: 50m
+      memory: 64Mi
+    type: Container

@@ -1,0 +1,67 @@
+# OPA Gatekeeper policy enforcement configuration
+replicas: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+controllerManager:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+audit:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Enable mutation and validation
+mutation:
+  enabled: true
+
+validation:
+  enabled: true
+
+# Enable audit
+audit:
+  enabled: true
+
+# Data sync
+dataSync:
+  enabled: true
+
+# Disable external data for simplicity
+externalData:
+  enabled: false
+
+# Enable resource quotas
+resourceQuotas:
+  enabled: true
+
+# Enable pod security policies
+podSecurityPolicy:
+  enabled: false  # Deprecated in newer Kubernetes versions
+
+# Enable webhook
+webhook:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

@@ -1,0 +1,35 @@
+# NGINX Ingress Controller configuration
+controller:
+  service:
+    type: LoadBalancer
+    loadBalancerIP: 192.168.1.241
+    annotations:
+      metallb.universe.tf/address-pool: default
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  config:
+    use-forwarded-headers: "true"
+  replicaCount: 2
+
+defaultBackend:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+
+podSecurityPolicy:
+  enabled: false

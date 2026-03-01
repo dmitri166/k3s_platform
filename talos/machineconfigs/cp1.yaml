@@ -1,0 +1,37 @@
+# Talos machine configuration for control plane node 1
+version: v1.7.0
+persist: true
+machine:
+  type: controlplane
+  network:
+    hostname: cp1
+    interfaces:
+      - device: eth0
+        cidr: 192.168.1.101/24
+  install:
+    disk: /dev/sda
+    image: ghcr.io/siderolabs/talos:v1.7.0
+  kubelet:
+    extraArgs:
+      node-ip: 192.168.1.101
+cluster:
+  controlPlane:
+    endpoint: https://192.168.1.101:6443
+    localAPIServerPort: 6443
+  network:
+    pod:
+      cidrs:
+        - 10.244.0.0/16
+    service:
+      cidrs:
+        - 10.96.0.0/12
+  apiServer:
+    certSANs:
+      - 192.168.1.101
+      - 192.168.1.102
+      - 192.168.1.103
+      - 127.0.0.1
+      - kubernetes
+      - kubernetes.default
+      - kubernetes.default.svc
+      - kubernetes.default.svc.cluster.local
