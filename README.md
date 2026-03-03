@@ -90,7 +90,7 @@ Ensure you have the following tools installed:
 
 After deployment, access the services at:
 
-- **ArgoCD**: http://192.168.56.240
+- **ArgoCD**: http://192.168.56.245
 - **Applications**: http://192.168.56.241
 - **Grafana**: http://192.168.56.242
 - **Prometheus**: http://192.168.56.243
@@ -127,7 +127,7 @@ Network: 192.168.56.0/24
 
 ```
 MetalLB IP Range: 192.168.56.240-192.168.56.250
-├── ArgoCD: 192.168.56.240
+├── ArgoCD: 192.168.56.245
 ├── Ingress: 192.168.56.241
 ├── Grafana: 192.168.56.242
 ├── Prometheus: 192.168.56.243

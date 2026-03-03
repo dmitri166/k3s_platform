@@ -6,7 +6,7 @@ output "argocd_namespace" {
 }
 
 output "argocd_server_url" {
-  value       = "http://192.168.56.240"
+  value       = "http://192.168.56.245"
   description = "ArgoCD server URL"
 }
 

@@ -56,6 +56,10 @@ EOF
     config.vm.define "cp#{i}" do |cp|
       cp.vm.hostname = "cp#{i}"
       cp.vm.network "private_network", ip: cp_ip.call(i)
+      if i == 1
+        # Stable host access path for local tooling (kubectl/Terraform).
+        cp.vm.network "forwarded_port", guest: 6443, host: 64430, host_ip: "127.0.0.1", auto_correct: true
+      end
       cp.vm.provider "virtualbox" do |vb|
         vb.name = "#{cluster_name}-cp#{i}"
         vb.memory = cp_memory
@@ -80,6 +84,8 @@ EOF
             --tls-san #{cp_ip.call(1)} \
             --tls-san #{cp_ip.call(2)} \
             --tls-san #{cp_ip.call(3)} \
+            --tls-san 127.0.0.1 \
+            --tls-san localhost \
             --node-ip "$NODE_IP" \
             --advertise-address "$NODE_IP" \
             --flannel-iface "$K3S_IFACE" \
@@ -111,6 +117,8 @@ EOF
             --server https://#{cp_ip.call(1)}:6443 \
             --token "$K3S_TOKEN" \
             --tls-san #{cp_ip.call(i)} \
+            --tls-san 127.0.0.1 \
+            --tls-san localhost \
             --node-ip "$NODE_IP" \
             --advertise-address "$NODE_IP" \
             --flannel-iface "$K3S_IFACE" \

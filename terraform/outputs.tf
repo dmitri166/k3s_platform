@@ -32,7 +32,7 @@ output "all_node_ips" {
 }
 
 output "argocd_url" {
-  value       = "http://192.168.56.240"
+  value       = "http://192.168.56.245"
   description = "URL for ArgoCD web interface"
 }
 
