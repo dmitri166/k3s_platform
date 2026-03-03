@@ -43,3 +43,7 @@ metrics:
   enabled: true
   serviceMonitor:
     enabled: true
+
+# Fresh cluster install: avoid pre-install CRD upgrade hook job image pulls.
+# CRDs are already managed by the chart during install.
+upgradeCRDs: false
