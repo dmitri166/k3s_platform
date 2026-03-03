@@ -6,7 +6,13 @@ variable "metallb_namespace" {
   description = "MetalLB namespace"
 }
 
-variable "metallb_config" {
-  type        = any
-  description = "MetalLB configuration"
+variable "address_pool_name" {
+  type        = string
+  default     = "default"
+  description = "MetalLB IPAddressPool name"
+}
+
+variable "address_pool_cidr" {
+  type        = string
+  description = "MetalLB address range, e.g. 192.168.56.240-192.168.56.250"
 }

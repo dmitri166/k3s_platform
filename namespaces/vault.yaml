@@ -1,11 +1,11 @@
-# Vault namespace configuration
+﻿# Vault namespace configuration
 apiVersion: v1
 kind: Namespace
 metadata:
   name: vault
   labels:
     name: vault
-    app.kubernetes.io/part-of: talos-platform
+    app.kubernetes.io/part-of: k3s-platform
     environment: development
     purpose: secrets-services
   annotations:
@@ -51,3 +51,4 @@ spec:
       cpu: 50m
       memory: 64Mi
     type: Container
+

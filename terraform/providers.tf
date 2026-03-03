@@ -1,6 +1,11 @@
-# Provider configurations for Talos on-premises platform
+# Provider configurations for K3s platform
 
-# Helm provider for Kubernetes package management
+provider "kubernetes" {
+  config_path = var.kubeconfig_path
+}
+
 provider "helm" {
-  # Configuration will be set after cluster bootstrap
+  kubernetes {
+    config_path = var.kubeconfig_path
+  }
 }

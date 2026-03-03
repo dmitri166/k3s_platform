@@ -1,9 +1,15 @@
-# Input variables for Talos on-premises platform
+# Input variables for K3s on-premises platform
 
 variable "cluster_name" {
   type        = string
   default     = "k3s-platform"
   description = "Name of the Kubernetes cluster"
+}
+
+variable "kubeconfig_path" {
+  type        = string
+  default     = "~/.kube/config-k3s"
+  description = "Path to kubeconfig used by Terraform Kubernetes/Helm providers"
 }
 
 variable "kubernetes_version" {

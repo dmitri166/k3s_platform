@@ -1,5 +1,5 @@
 # Get Service URLs Script
-# This script retrieves all service URLs from the Talos platform
+# This script retrieves all service URLs from the K3s platform
 
 param(
     [switch]$Verbose,
@@ -73,8 +73,8 @@ function Get-ServicePort {
 # Function to get ArgoCD credentials
 function Get-ArgoCDCredentials {
     try {
-        $password = terraform output -raw argocd_admin_password 2>$null
-        return $password
+        $cmd = terraform output -raw argocd_initial_admin_password_command 2>$null
+        return $cmd
     }
     catch {
         return $null
@@ -110,11 +110,11 @@ try {
             Write-Host "     IP: $argocdIP, Port: $argocdPort" -ForegroundColor Gray
         }
         
-        # Get credentials
-        $argocdPassword = Get-ArgoCDCredentials
-        if ($argocdPassword) {
+        # Get credentials command
+        $argocdPasswordCommand = Get-ArgoCDCredentials
+        if ($argocdPasswordCommand) {
             Write-Host "     Username: admin" -ForegroundColor Gray
-            Write-Host "     Password: $argocdPassword" -ForegroundColor Gray
+            Write-Host "     Retrieve password: $argocdPasswordCommand" -ForegroundColor Gray
         }
         
         Test-URL -URL $argocdURL -ServiceName "ArgoCD"
@@ -147,7 +147,7 @@ try {
         
         if ($Verbose) {
             Write-Host "     IP: $grafanaIP, Port: $grafanaPort" -ForegroundColor Gray
-            Write-Host "     Default credentials: admin/admin123" -ForegroundColor Gray
+            Write-Host "     Credentials are managed by chart secrets (no hardcoded default)." -ForegroundColor Gray
         }
         
         Test-URL -URL $grafanaURL -ServiceName "Grafana"
@@ -205,7 +205,7 @@ try {
     
     # Additional information
     Write-Host "`n📋 Additional Information:" -ForegroundColor Cyan
-    Write-Host "  🐙 Kubernetes API: https://192.168.1.101:6443" -ForegroundColor White
+    Write-Host "  🐙 Kubernetes API: https://192.168.56.101:6443" -ForegroundColor White
     Write-Host "  📊 Cluster nodes: kubectl get nodes" -ForegroundColor Gray
     Write-Host "  🚀 ArgoCD apps: kubectl get applications -n argocd" -ForegroundColor Gray
     Write-Host "  📈 Monitoring: kubectl get pods -n monitoring" -ForegroundColor Gray

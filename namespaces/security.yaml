@@ -1,11 +1,11 @@
-# Security namespace configuration
+﻿# Security namespace configuration
 apiVersion: v1
 kind: Namespace
 metadata:
   name: security
   labels:
     name: security
-    app.kubernetes.io/part-of: talos-platform
+    app.kubernetes.io/part-of: k3s-platform
     environment: development
     purpose: security-services
   annotations:
@@ -51,3 +51,4 @@ spec:
       cpu: 50m
       memory: 64Mi
     type: Container
+

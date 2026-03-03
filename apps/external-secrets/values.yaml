@@ -1,4 +1,4 @@
-# External Secrets Operator configuration
+﻿# External Secrets Operator configuration
 replicaCount: 2
 
 resources:
@@ -9,7 +9,6 @@ resources:
     cpu: 200m
     memory: 256Mi
 
-# Enable External Secrets Operator
 externalSecrets:
   resources:
     requests:
@@ -18,8 +17,9 @@ externalSecrets:
     limits:
       cpu: 200m
       memory: 256Mi
+  port: 8080
+  hostPort: 0
 
-# Enable cert controller
 certController:
   resources:
     requests:
@@ -28,8 +28,9 @@ certController:
     limits:
       cpu: 200m
       memory: 256Mi
+  port: 9443
+  hostPort: 0
 
-# Enable webhook
 webhook:
   resources:
     requests:
@@ -38,44 +39,22 @@ webhook:
     limits:
       cpu: 200m
       memory: 256Mi
+  port: 9443
+  hostPort: 0
 
-# Enable metrics
 metrics:
   enabled: true
   serviceMonitor:
     enabled: true
 
-# Enable network policies
 networkPolicy:
   enabled: true
 
-# Enable RBAC
 rbac:
   create: true
 
-# Enable service account
 serviceAccount:
   create: true
 
-# Enable pod security
-podSecurityPolicy:
-  enabled: false
-
-# Enable leader election
 leaderElection:
   enabled: true
-
-# Enable webhook
-webhook:
-  port: 9443
-  hostPort: 0
-
-# Enable cert controller
-certController:
-  port: 9443
-  hostPort: 0
-
-# Enable external secrets
-externalSecrets:
-  port: 8080
-  hostPort: 0

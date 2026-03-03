@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minio
+  labels:
+    name: minio
+    app.kubernetes.io/part-of: k3s-platform
+    environment: development
+    purpose: object-storage
+  annotations:
+    argocd.argoproj.io/sync-options: CreateNamespace=true
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: minio-quota
+  namespace: minio
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+    persistentvolumeclaims: "3"
+    pods: "10"
+    services: "5"

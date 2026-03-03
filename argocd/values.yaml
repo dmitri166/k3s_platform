@@ -20,12 +20,12 @@ server:
       memory: 256Mi
   config:
     repositories:
-      talos_platform:
-        url: https://github.com/dmitr/talos_platform.git
+      k3s_platform:
+        url: https://github.com/dmitri166/k3s_platform.git
         type: git
   service:
     type: LoadBalancer
-    loadBalancerIP: 192.168.1.240
+    loadBalancerIP: 192.168.56.240
     ports:
       http: 80
       https: 443
@@ -71,9 +71,8 @@ configs:
     application.resourceTrackingMethod: annotation
     statusbadge.application.enabled: true
   params:
-    server.insecure: true
+    server.insecure: false
     application.instance.label.key: argocd.argoproj.io/instance
-    application.instance.label.value: '{{.Values.apps.instanceLabelKey}}'
 
 rbac:
   create: true
@@ -102,12 +101,6 @@ podSecurityPolicy:
 
 # Enable service account
 serviceAccount:
-  create: true
-  annotations:
-    iam.amazonaws.com/permitted: "true"
-
-# Enable RBAC
-rbac:
   create: true
 
 # Enable ingress

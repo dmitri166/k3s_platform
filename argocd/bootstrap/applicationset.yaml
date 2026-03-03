@@ -1,8 +1,8 @@
-# ArgoCD ApplicationSet for bootstrapping all platform applications
+﻿# ArgoCD ApplicationSet for bootstrapping all platform applications
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: talos-platform-apps
+  name: k3s-platform-apps
   namespace: argocd
 spec:
   generators:
@@ -29,6 +29,9 @@ spec:
       - name: falco
         path: apps/falco
         namespace: falco
+      - name: minio
+        path: apps/minio
+        namespace: minio
       - name: velero
         path: apps/velero
         namespace: velero
@@ -40,15 +43,15 @@ spec:
         namespace: external-secrets
   template:
     metadata:
-      name: '{{path}}'
+      name: '{{name}}'
       namespace: argocd
       labels:
-        app.kubernetes.io/name: '{{path}}'
-        app.kubernetes.io/part-of: talos-platform
+        app.kubernetes.io/name: '{{name}}'
+        app.kubernetes.io/part-of: k3s-platform
     spec:
       project: default
       source:
-        repoURL: https://github.com/dmitr/talos_platform.git
+        repoURL: https://github.com/dmitri166/k3s_platform.git
         targetRevision: HEAD
         path: '{{path}}'
       destination:
@@ -67,3 +70,4 @@ spec:
             duration: 5s
             factor: 2
             maxDuration: 3m
+

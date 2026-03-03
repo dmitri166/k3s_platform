@@ -1,145 +1,162 @@
-# Vagrantfile for K3s Platform - HA Kubernetes Cluster
+﻿# Vagrantfile for K3s Platform - HA Kubernetes Cluster
 Vagrant.configure("2") do |config|
-  
-  config.vm.box = "ubuntu/jammy64"
+  cluster_name   = ENV.fetch("CLUSTER_NAME", "k3s-platform")
+  vm_box         = ENV.fetch("VM_BOX", "ubuntu/jammy64")
+  k3s_version    = ENV.fetch("K3S_VERSION", "v1.34.4+k3s1")
+  network_prefix = ENV.fetch("K3S_NET_PREFIX", "192.168.56")
+  cp_memory      = ENV.fetch("CP_MEMORY_MB", "2048")
+  cp_cpus        = ENV.fetch("CP_CPUS", "2")
+  worker_memory  = ENV.fetch("WORKER_MEMORY_MB", "1536")
+  worker_cpus    = ENV.fetch("WORKER_CPUS", "1")
+
+  cp_ip = ->(i) { "#{network_prefix}.#{100 + i}" }
+  worker_ip = ->(i) { "#{network_prefix}.#{103 + i}" }
+
+  config.vm.box = vm_box
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.synced_folder "./scripts", "/vagrant/scripts", type: "virtualbox"
-  
-  config.ssh.insert_key = false
+
+  # Prefer ephemeral keys over static insecure credentials.
+  config.ssh.insert_key = true
   config.ssh.verify_host_key = false
-  
+
   # Common provisioning script
-  $common_provision = <<-SHELL
-    # Update system
-    apt-get update && apt-get upgrade -y
-    
-    # Install required packages
-    apt-get install -y curl wget gnupg software-properties-common
-    
+  common_provision = <<-SHELL
+    set -euo pipefail
+    export DEBIAN_FRONTEND=noninteractive
+
+    apt-get update
+    apt-get install -y curl wget gnupg software-properties-common ca-certificates netcat-openbsd
+
     # Disable swap (Kubernetes requirement)
     swapoff -a
     sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
-    
+
     # Enable kernel modules
-    cat <<EOF | tee /etc/modules-load.d/k8s.conf
+    cat <<EOF >/etc/modules-load.d/k8s.conf
 br_netfilter
 overlay
 EOF
-    
+
     modprobe br_netfilter
     modprobe overlay
-    
-    # Set sysctl params
-    cat <<EOF | tee /etc/sysctl.d/k8s.conf
+
+    # Set sysctl params required for Kubernetes networking.
+    cat <<EOF >/etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
 EOF
-    
-    sysctl --system
-    
-    # Create k3s user
-    useradd -m -s /bin/bash k3s
-    echo 'k3s:k3s123' | chpasswd
-    usermod -aG sudo k3s
-    
-    # Configure SSH for k3s user
-    mkdir -p /home/k3s/.ssh
-    chmod 700 /home/k3s/.ssh
-    chown k3s:k3s /home/k3s/.ssh
-    
-    echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/99-password.conf
-    echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config.d/99-password.conf
-    systemctl restart ssh
+
+    sysctl --system >/dev/null
   SHELL
-  
+
   # Control Plane Nodes (3-node HA)
   (1..3).each do |i|
     config.vm.define "cp#{i}" do |cp|
       cp.vm.hostname = "cp#{i}"
-      cp.vm.network "private_network", ip: "192.168.56.#{100 + i}"
+      cp.vm.network "private_network", ip: cp_ip.call(i)
       cp.vm.provider "virtualbox" do |vb|
-        vb.name = "k3s-platform-cp#{i}"
-        vb.memory = "2048"
-        vb.cpus = "2"
+        vb.name = "#{cluster_name}-cp#{i}"
+        vb.memory = cp_memory
+        vb.cpus = cp_cpus
         vb.gui = false
       end
-      
-      # Provision control plane
-      cp.vm.provision "shell", inline: $common_provision
-      
+
+      cp.vm.provision "shell", inline: common_provision
+
       cp.vm.provision "shell", inline: <<-SHELL
-        # Install K3s server
+        set -euo pipefail
+        export INSTALL_K3S_VERSION="#{k3s_version}"
+        NODE_IP="#{cp_ip.call(i)}"
+        K3S_IFACE=$(ip -o -4 addr show | grep -F "#{network_prefix}." | awk '{print $2; exit}')
+        [ -n "$K3S_IFACE" ] || { echo "failed to detect private interface for #{network_prefix}.0/24"; ip -o -4 addr show; exit 1; }
+
         if [ #{i} -eq 1 ]; then
-          # First control plane node (initialize cluster)
+          rm -f /vagrant/scripts/k3s-token.txt
+
           curl -sfL https://get.k3s.io | sh -s - server \
             --cluster-init \
-            --tls-san 192.168.56.101 \
-            --tls-san 192.168.56.102 \
-            --tls-san 192.168.56.103 \
-            --write-kubeconfig-mode 644
-            
-          # Get cluster token for other nodes
-          cat /var/lib/rancher/k3s/server/node-token > /vagrant/scripts/k3s-token.txt
-          
-          echo "=== K3s Control Plane #{i} Ready ==="
-          echo "IP: 192.168.56.#{100 + i}"
-          echo "Role: Control Plane (Cluster Init)"
-          echo "=============================="
+            --tls-san #{cp_ip.call(1)} \
+            --tls-san #{cp_ip.call(2)} \
+            --tls-san #{cp_ip.call(3)} \
+            --node-ip "$NODE_IP" \
+            --advertise-address "$NODE_IP" \
+            --flannel-iface "$K3S_IFACE" \
+            --write-kubeconfig-mode 644 \
+            --disable servicelb
+
+          # Share token for joining members.
+          cat /var/lib/rancher/k3s/server/node-token >/vagrant/scripts/k3s-token.txt
         else
-          # Additional control plane nodes
-          sleep 30  # Wait for first node to be ready
-          
-          # Get token from shared file
+          # Wait until bootstrap token appears.
+          for n in $(seq 1 90); do
+            if [ -s /vagrant/scripts/k3s-token.txt ]; then
+              break
+            fi
+            sleep 2
+          done
+          [ -s /vagrant/scripts/k3s-token.txt ] || { echo "k3s token not found"; exit 1; }
+
+          # Wait until cp1 API port is reachable.
+          for n in $(seq 1 90); do
+            if nc -z #{cp_ip.call(1)} 6443; then
+              break
+            fi
+            sleep 2
+          done
+
           K3S_TOKEN=$(cat /vagrant/scripts/k3s-token.txt)
-          
           curl -sfL https://get.k3s.io | sh -s - server \
-            --server https://192.168.56.101:6443 \
-            --token $K3S_TOKEN \
-            --tls-san 192.168.56.#{100 + i}
-          
-          echo "=== K3s Control Plane #{i} Ready ==="
-          echo "IP: 192.168.56.#{100 + i}"
-          echo "Role: Control Plane (Joined)"
-          echo "=============================="
+            --server https://#{cp_ip.call(1)}:6443 \
+            --token "$K3S_TOKEN" \
+            --tls-san #{cp_ip.call(i)} \
+            --node-ip "$NODE_IP" \
+            --advertise-address "$NODE_IP" \
+            --flannel-iface "$K3S_IFACE" \
+            --disable servicelb
         fi
       SHELL
     end
   end
-  
+
   # Worker Nodes (2 nodes)
   (1..2).each do |i|
     config.vm.define "worker#{i}" do |worker|
       worker.vm.hostname = "worker#{i}"
-      worker.vm.network "private_network", ip: "192.168.56.#{103 + i}"
+      worker.vm.network "private_network", ip: worker_ip.call(i)
       worker.vm.provider "virtualbox" do |vb|
-        vb.name = "k3s-platform-worker#{i}"
-        vb.memory = "1536"
-        vb.cpus = "1"
+        vb.name = "#{cluster_name}-worker#{i}"
+        vb.memory = worker_memory
+        vb.cpus = worker_cpus
         vb.gui = false
       end
-      
-      # Provision worker
-      worker.vm.provision "shell", inline: $common_provision
-      
+
+      worker.vm.provision "shell", inline: common_provision
+
       worker.vm.provision "shell", inline: <<-SHELL
-        # Wait for control plane to be ready
-        sleep 60
-        
-        # Get token from shared file
+        set -euo pipefail
+        export INSTALL_K3S_VERSION="#{k3s_version}"
+        NODE_IP="#{worker_ip.call(i)}"
+        K3S_IFACE=$(ip -o -4 addr show | grep -F "#{network_prefix}." | awk '{print $2; exit}')
+        [ -n "$K3S_IFACE" ] || { echo "failed to detect private interface for #{network_prefix}.0/24"; ip -o -4 addr show; exit 1; }
+
+        # Wait for shared bootstrap token and cp1 API availability.
+        for n in $(seq 1 90); do
+          if [ -s /vagrant/scripts/k3s-token.txt ] && nc -z #{cp_ip.call(1)} 6443; then
+            break
+          fi
+          sleep 2
+        done
+        [ -s /vagrant/scripts/k3s-token.txt ] || { echo "k3s token not found"; exit 1; }
+
         K3S_TOKEN=$(cat /vagrant/scripts/k3s-token.txt)
-        
-        # Install K3s agent
         curl -sfL https://get.k3s.io | sh -s - agent \
-          --server https://192.168.56.101:6443 \
-          --token $K3S_TOKEN
-        
-        echo "=== K3s Worker #{i} Ready ==="
-        echo "IP: 192.168.56.#{103 + i}"
-        echo "Role: Worker Node"
-        echo "=========================="
+          --server https://#{cp_ip.call(1)}:6443 \
+          --node-ip "$NODE_IP" \
+          --flannel-iface "$K3S_IFACE" \
+          --token "$K3S_TOKEN"
       SHELL
     end
   end
-  
 end

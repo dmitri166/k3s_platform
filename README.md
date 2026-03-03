@@ -99,8 +99,8 @@ After deployment, access the services at:
 ### Get Credentials
 
 ```bash
-# Get ArgoCD admin password
-terraform output -raw argocd_admin_password
+# Get ArgoCD initial admin password
+terraform output -raw argocd_initial_admin_password_command
 
 # Access cluster via kubectl
 export KUBECONFIG=~/.kube/config-k3s
@@ -171,7 +171,7 @@ apps/
 ### Multi-Layered Security
 
 1. **Infrastructure Security**:
-   - Talos OS immutable system
+   - Hardened host OS baseline
    - Network segmentation
    - Firewall rules
 
@@ -249,7 +249,7 @@ apps/
 ### Common Issues
 
 1. **VM startup issues**: Check Multipass status
-2. **Cluster bootstrap**: Verify Talos configuration
+2. **Cluster bootstrap**: Verify K3s configuration
 3. **Service access**: Check MetalLB and networking
 4. **Application deployment**: Check ArgoCD status
 

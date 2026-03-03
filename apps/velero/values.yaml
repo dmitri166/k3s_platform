@@ -1,103 +1,45 @@
-# Velero backup and restore configuration
-replicaCount: 1
-
+﻿# Velero configuration for local K3s lab with MinIO backend
 resources:
   requests:
     cpu: 100m
     memory: 256Mi
   limits:
     cpu: 500m
-      memory: 512Mi
+    memory: 512Mi
 
-# Enable Velero
-velero:
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
+credentials:
+  useSecret: true
+  existingSecret: velero-credentials
 
-# Enable restic
-restic:
-  enabled: true
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
+initContainers:
+- name: velero-plugin-for-aws
+  image: velero/velero-plugin-for-aws:v1.9.2
+  imagePullPolicy: IfNotPresent
+  volumeMounts:
+  - mountPath: /target
+    name: plugins
 
-# Enable node agent
-nodeAgent:
-  enabled: true
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
+configuration:
+  backupStorageLocation:
+  - name: default
+    provider: aws
+    bucket: velero
+    default: true
+    config:
+      region: minio
+      s3ForcePathStyle: "true"
+      s3Url: http://minio.minio.svc.cluster.local:9000
+  volumeSnapshotLocation:
+  - name: default
+    provider: aws
+    config:
+      region: minio
 
-# Configure local storage for on-premises
-defaultVolumesToFsBackup: true
-defaultBackupLocation: "default"
-defaultVolumesSnapshotLocation: "default"
+deployNodeAgent: true
+snapshotsEnabled: false
+backupsEnabled: true
 
-# Storage configuration
-defaultBackupStorageLocation: "default"
-defaultVolumeSnapshotLocation: "default"
-defaultVolumesToFsBackup: true
-
-# Storage class configuration
-defaultStorageClass: "standard"
-defaultStorageClassPriority: 0
-
-# Enable schedules
-schedules:
-  enabled: true
-
-# Enable backups
-backups:
-  enabled: true
-  ttl: "720h0m0s"  # 30 days
-
-# Enable restores
-restores:
-  enabled: true
-
-# Enable metrics
 metrics:
   enabled: true
   serviceMonitor:
     enabled: true
-
-# Enable snapshots
-snapshots:
-  enabled: true
-
-# Enable upgrade
-upgrade:
-  enabled: true
-
-# Configuration
-configuration:
-  provider: local
-  backupStorageLocation:
-    name: default
-    config:
-      path: /var/velero-backups
-  volumeSnapshotLocation:
-    name: default
-    config:
-      path: /var/velero-snapshots
-
-# Enable snapshots
-snapshots:
-  enabled: true
-
-# Enable upgrade
-upgrade:
-  enabled: true

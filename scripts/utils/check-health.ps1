@@ -1,4 +1,4 @@
-# Talos Platform Health Check Script
+# K3s Platform Health Check Script
 # This script checks the health of all platform components
 
 param(
@@ -6,7 +6,7 @@ param(
     [switch]$Wait
 )
 
-Write-Host "🏥 Checking Talos Platform Health..." -ForegroundColor Cyan
+Write-Host "Checking K3s Platform Health..." -ForegroundColor Cyan
 
 # Function to check if command exists
 function Test-Command {

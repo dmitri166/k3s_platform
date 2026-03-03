@@ -1,4 +1,4 @@
-# MetalLB module for LoadBalancer support
+﻿# MetalLB module for LoadBalancer support
 
 terraform {
   required_providers {
@@ -18,8 +18,8 @@ resource "kubernetes_namespace" "metallb" {
   metadata {
     name = var.metallb_namespace
     labels = {
-      "app.kubernetes.io/name" = "metallb"
-      "app.kubernetes.io/part-of" = "talos-platform"
+      "app.kubernetes.io/name"    = "metallb"
+      "app.kubernetes.io/part-of" = "k3s-platform"
     }
   }
 }
@@ -31,31 +31,31 @@ resource "helm_release" "metallb" {
   chart      = "metallb"
   version    = "0.13.12"
   namespace  = kubernetes_namespace.metallb.metadata[0].name
-  
+
   values = [
     yamlencode({
       namespace = {
-        create = false  # Namespace already created
+        create = false # Namespace already created
       }
     })
   ]
-  
+
   depends_on = [
     kubernetes_namespace.metallb
   ]
 }
 
-# Create MetalLB ConfigMap
-resource "kubernetes_config_map" "metallb_config" {
-  metadata {
-    name      = "config"
-    namespace = kubernetes_namespace.metallb.metadata[0].name
-  }
-
-  data = {
-    config = yamlencode({
-      address-pools = var.metallb_config.address_pools
-    })
+resource "kubernetes_manifest" "metallb_ipaddress_pool" {
+  manifest = {
+    apiVersion = "metallb.io/v1beta1"
+    kind       = "IPAddressPool"
+    metadata = {
+      name      = var.address_pool_name
+      namespace = kubernetes_namespace.metallb.metadata[0].name
+    }
+    spec = {
+      addresses = [var.address_pool_cidr]
+    }
   }
 
   depends_on = [
@@ -63,14 +63,21 @@ resource "kubernetes_config_map" "metallb_config" {
   ]
 }
 
-# Wait for MetalLB to be ready
-resource "null_resource" "metallb_ready" {
-  depends_on = [
-    helm_release.metallb,
-    kubernetes_config_map.metallb_config
-  ]
-  
-  provisioner "local-exec" {
-    command = "kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=metallb -n ${var.metallb_namespace} --timeout=300s"
+resource "kubernetes_manifest" "metallb_l2_advertisement" {
+  manifest = {
+    apiVersion = "metallb.io/v1beta1"
+    kind       = "L2Advertisement"
+    metadata = {
+      name      = "${var.address_pool_name}-l2"
+      namespace = kubernetes_namespace.metallb.metadata[0].name
+    }
+    spec = {
+      ipAddressPools = [var.address_pool_name]
+    }
   }
+
+  depends_on = [
+    kubernetes_manifest.metallb_ipaddress_pool
+  ]
 }
+

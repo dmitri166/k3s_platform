@@ -36,10 +36,9 @@ output "argocd_url" {
   description = "URL for ArgoCD web interface"
 }
 
-output "argocd_admin_password" {
-  value     = random_password.argocd_admin.result
-  sensitive = true
-  description = "ArgoCD admin password"
+output "argocd_initial_admin_password_command" {
+  value       = module.argocd.argocd_initial_admin_password_command
+  description = "Command to retrieve ArgoCD initial admin password"
 }
 
 output "ingress_url" {
