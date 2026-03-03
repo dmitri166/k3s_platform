@@ -1,6 +1,11 @@
 # Loki logging stack configuration (optimized for small workers)
 loki:
   enabled: true
+  service:
+    type: LoadBalancer
+    loadBalancerIP: 192.168.56.247
+    annotations:
+      metallb.universe.tf/address-pool: default
   resources:
     requests:
       cpu: 100m

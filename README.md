@@ -100,6 +100,8 @@ After deployment, access the services at:
 - **Grafana**: http://192.168.56.242
 - **Prometheus**: http://192.168.56.243
 - **Vault**: http://192.168.56.244
+- **Alertmanager**: http://192.168.56.246
+- **Loki**: http://192.168.56.247
 
 ### Get Credentials
 

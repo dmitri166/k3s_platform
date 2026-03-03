@@ -61,6 +61,16 @@ output "vault_url" {
   description = "URL for Vault interface"
 }
 
+output "alertmanager_url" {
+  value       = "http://192.168.56.246"
+  description = "URL for Alertmanager interface"
+}
+
+output "loki_url" {
+  value       = "http://192.168.56.247"
+  description = "URL for Loki interface"
+}
+
 output "metallb_ip_range" {
   value       = local.metallb_pool
   description = "IP range for MetalLB LoadBalancer services"
