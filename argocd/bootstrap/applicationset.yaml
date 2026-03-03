@@ -1,8 +1,13 @@
-﻿# ArgoCD ApplicationSet for bootstrapping all platform applications
+# ArgoCD ApplicationSets for bootstrapping platform components.
+#
+# Why two sets:
+# - Git apps deploy plain Kubernetes manifests from this repo.
+# - Helm apps deploy upstream charts while reusing values files from this repo.
+
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: k3s-platform-apps
+  name: k3s-platform-git-apps
   namespace: argocd
 spec:
   generators:
@@ -11,36 +16,9 @@ spec:
       - name: namespaces
         path: namespaces
         namespace: argocd
-      - name: ingress-nginx
-        path: apps/ingress-nginx
-        namespace: ingress-nginx
-      - name: cert-manager
-        path: apps/cert-manager
-        namespace: cert-manager
-      - name: kube-prometheus-stack
-        path: apps/kube-prometheus-stack
-        namespace: monitoring
-      - name: loki-stack
-        path: apps/loki-stack
-        namespace: monitoring
-      - name: opa-gatekeeper
-        path: apps/opa-gatekeeper
-        namespace: gatekeeper-system
-      - name: falco
-        path: apps/falco
-        namespace: falco
       - name: minio
         path: apps/minio
         namespace: minio
-      - name: velero
-        path: apps/velero
-        namespace: velero
-      - name: vault
-        path: apps/vault
-        namespace: vault
-      - name: external-secrets
-        path: apps/external-secrets
-        namespace: external-secrets
   template:
     metadata:
       name: '{{name}}'
@@ -70,4 +48,102 @@ spec:
             duration: 5s
             factor: 2
             maxDuration: 3m
-
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: k3s-platform-helm-apps
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - name: ingress-nginx
+        namespace: ingress-nginx
+        chart: ingress-nginx
+        repoURL: https://kubernetes.github.io/ingress-nginx
+        targetRevision: 4.11.3
+        valuesPath: apps/ingress-nginx/values.yaml
+      - name: cert-manager
+        namespace: cert-manager
+        chart: cert-manager
+        repoURL: https://charts.jetstack.io
+        targetRevision: v1.16.1
+        valuesPath: apps/cert-manager/values.yaml
+      - name: kube-prometheus-stack
+        namespace: monitoring
+        chart: kube-prometheus-stack
+        repoURL: https://prometheus-community.github.io/helm-charts
+        targetRevision: 65.8.1
+        valuesPath: apps/kube-prometheus-stack/values.yaml
+      - name: loki-stack
+        namespace: monitoring
+        chart: loki-stack
+        repoURL: https://grafana.github.io/helm-charts
+        targetRevision: 2.10.2
+        valuesPath: apps/loki-stack/values.yaml
+      - name: opa-gatekeeper
+        namespace: gatekeeper-system
+        chart: gatekeeper
+        repoURL: https://open-policy-agent.github.io/gatekeeper/charts
+        targetRevision: 3.17.1
+        valuesPath: apps/opa-gatekeeper/values.yaml
+      - name: falco
+        namespace: falco
+        chart: falco
+        repoURL: https://falcosecurity.github.io/charts
+        targetRevision: 4.21.0
+        valuesPath: apps/falco/values.yaml
+      - name: velero
+        namespace: velero
+        chart: velero
+        repoURL: https://vmware-tanzu.github.io/helm-charts
+        targetRevision: 8.3.0
+        valuesPath: apps/velero/values.yaml
+      - name: vault
+        namespace: vault
+        chart: vault
+        repoURL: https://helm.releases.hashicorp.com
+        targetRevision: 0.30.0
+        valuesPath: apps/vault/values.yaml
+      - name: external-secrets
+        namespace: external-secrets
+        chart: external-secrets
+        repoURL: https://charts.external-secrets.io
+        targetRevision: 0.10.5
+        valuesPath: apps/external-secrets/values.yaml
+  template:
+    metadata:
+      name: '{{name}}'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/name: '{{name}}'
+        app.kubernetes.io/part-of: k3s-platform
+    spec:
+      project: default
+      sources:
+      - repoURL: '{{repoURL}}'
+        chart: '{{chart}}'
+        targetRevision: '{{targetRevision}}'
+        helm:
+          valueFiles:
+          - '$values/{{valuesPath}}'
+      - repoURL: https://github.com/dmitri166/k3s_platform.git
+        targetRevision: HEAD
+        ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+        - PrunePropagationPolicy=foreground
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
