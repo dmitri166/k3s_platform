@@ -5,9 +5,9 @@ Vagrant.configure("2") do |config|
   k3s_version    = ENV.fetch("K3S_VERSION", "v1.34.4+k3s1")
   network_prefix = ENV.fetch("K3S_NET_PREFIX", "192.168.56")
   hostonly_adapter = ENV.fetch("HOSTONLY_ADAPTER", "VirtualBox Host-Only Ethernet Adapter")
-  cp_memory      = ENV.fetch("CP_MEMORY_MB", "2048")
+  cp_memory      = ENV.fetch("CP_MEMORY_MB", "3072")
   cp_cpus        = ENV.fetch("CP_CPUS", "2")
-  worker_memory  = ENV.fetch("WORKER_MEMORY_MB", "1536")
+  worker_memory  = ENV.fetch("WORKER_MEMORY_MB", "1024")
   worker_cpus    = ENV.fetch("WORKER_CPUS", "1")
 
   cp_ip = ->(i) { "#{network_prefix}.#{100 + i}" }

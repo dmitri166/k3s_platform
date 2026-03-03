@@ -145,9 +145,9 @@ MetalLB IP Range: 192.168.56.240-192.168.56.250
 
 | Node Type | RAM | CPU | Purpose |
 |-----------|-----|-----|---------|
-| Control Plane | 2GB | 2 | HA etcd + API server |
-| Workers | 1.5GB | 1 | Application workloads |
-| **Total** | **9GB** | **8** | **Complete platform** |
+| Control Plane | 3GB | 2 | HA etcd + API server |
+| Workers | 1GB | 1 | Application workloads |
+| **Total** | **11GB** | **8** | **Complete platform** |
 
 ## GitOps Workflow
 
