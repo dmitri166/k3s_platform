@@ -69,19 +69,24 @@ Ensure you have the following tools installed:
 
 ### Installation
 
-1. **Deploy K3s cluster**:
+1. **Run host networking preflight (Windows, Admin PowerShell)**:
+   ```powershell
+   .\scripts\preflight-network.ps1
+   ```
+
+2. **Deploy K3s cluster**:
    ```powershell
    .\scripts\k3s-deploy.ps1
    ```
 
-2. **Deploy platform services**:
+3. **Deploy platform services**:
    ```bash
    cd terraform
    terraform init
    terraform apply
    ```
 
-3. **Verify deployment**:
+4. **Verify deployment**:
    ```powershell
    .\scripts\k3s-platform-verify.ps1
    ```
@@ -252,6 +257,8 @@ apps/
 2. **Cluster bootstrap**: Verify K3s configuration
 3. **Service access**: Check MetalLB and networking
 4. **Application deployment**: Check ArgoCD status
+5. **Host cannot reach 192.168.56.x**: Run `.\scripts\preflight-network.ps1` and reload VMs (`vagrant reload`)
+6. **Temporary UI access workaround**: `kubectl -n argocd port-forward svc/argocd-server 8080:80` then open `http://localhost:8080`
 
 ### Debug Commands
 

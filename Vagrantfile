@@ -4,6 +4,7 @@ Vagrant.configure("2") do |config|
   vm_box         = ENV.fetch("VM_BOX", "ubuntu/jammy64")
   k3s_version    = ENV.fetch("K3S_VERSION", "v1.34.4+k3s1")
   network_prefix = ENV.fetch("K3S_NET_PREFIX", "192.168.56")
+  hostonly_adapter = ENV.fetch("HOSTONLY_ADAPTER", "VirtualBox Host-Only Ethernet Adapter")
   cp_memory      = ENV.fetch("CP_MEMORY_MB", "2048")
   cp_cpus        = ENV.fetch("CP_CPUS", "2")
   worker_memory  = ENV.fetch("WORKER_MEMORY_MB", "1536")
@@ -55,7 +56,7 @@ EOF
   (1..3).each do |i|
     config.vm.define "cp#{i}" do |cp|
       cp.vm.hostname = "cp#{i}"
-      cp.vm.network "private_network", ip: cp_ip.call(i)
+      cp.vm.network "private_network", ip: cp_ip.call(i), virtualbox__hostonly: hostonly_adapter
       if i == 1
         # Stable host access path for local tooling (kubectl/Terraform).
         cp.vm.network "forwarded_port", guest: 6443, host: 64430, host_ip: "127.0.0.1", auto_correct: true
@@ -65,6 +66,8 @@ EOF
         vb.memory = cp_memory
         vb.cpus = cp_cpus
         vb.gui = false
+        # Required for MetalLB L2 VIP announcements on host-only networks.
+        vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
       end
 
       cp.vm.provision "shell", inline: common_provision
@@ -132,12 +135,14 @@ EOF
   (1..2).each do |i|
     config.vm.define "worker#{i}" do |worker|
       worker.vm.hostname = "worker#{i}"
-      worker.vm.network "private_network", ip: worker_ip.call(i)
+      worker.vm.network "private_network", ip: worker_ip.call(i), virtualbox__hostonly: hostonly_adapter
       worker.vm.provider "virtualbox" do |vb|
         vb.name = "#{cluster_name}-worker#{i}"
         vb.memory = worker_memory
         vb.cpus = worker_cpus
         vb.gui = false
+        # Required for MetalLB L2 VIP announcements on host-only networks.
+        vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
       end
 
       worker.vm.provision "shell", inline: common_provision

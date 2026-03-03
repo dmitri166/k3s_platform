@@ -1,6 +1,10 @@
 # K3s Deployment Script
 Write-Host "Deploying K3s HA Cluster..." -ForegroundColor Cyan
 
+# Validate host-only networking before provisioning VMs.
+Write-Host "Running host network preflight..." -ForegroundColor Yellow
+.\scripts\preflight-network.ps1
+
 # Clean up any existing VMs
 Write-Host "Cleaning existing VMs..." -ForegroundColor Yellow
 vagrant destroy -f
