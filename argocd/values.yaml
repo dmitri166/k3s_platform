@@ -31,11 +31,11 @@ repoServer:
   replicas: 1
   resources:
     requests:
-      cpu: 50m
-      memory: 64Mi
-    limits:
       cpu: 200m
-      memory: 128Mi
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
 
 applicationSet:
   replicas: 1
@@ -71,6 +71,7 @@ configs:
   params:
     server.insecure: false
     application.instance.label.key: argocd.argoproj.io/instance
+    reposerver.parallelism.limit: 2
 
 rbac:
   create: true
