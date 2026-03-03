@@ -83,10 +83,17 @@ Ensure you have the following tools installed:
    ```bash
    cd terraform
    terraform init
+   terraform apply -target='module.metallb.kubernetes_namespace.metallb' -auto-approve
+   terraform apply -target='module.metallb.helm_release.metallb' -auto-approve
    terraform apply
    ```
 
-4. **Verify deployment**:
+4. **Bootstrap ArgoCD applications (GitOps apps of apps)**:
+   ```powershell
+   .\scripts\bootstrap-argocd-apps.ps1
+   ```
+
+5. **Verify deployment**:
    ```powershell
    .\scripts\k3s-platform-verify.ps1
    ```

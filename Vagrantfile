@@ -93,7 +93,8 @@ EOF
             --advertise-address "$NODE_IP" \
             --flannel-iface "$K3S_IFACE" \
             --write-kubeconfig-mode 644 \
-            --disable servicelb
+            --disable servicelb \
+            --disable traefik
 
           # Share token for joining members.
           cat /var/lib/rancher/k3s/server/node-token >/vagrant/scripts/k3s-token.txt
@@ -125,7 +126,8 @@ EOF
             --node-ip "$NODE_IP" \
             --advertise-address "$NODE_IP" \
             --flannel-iface "$K3S_IFACE" \
-            --disable servicelb
+            --disable servicelb \
+            --disable traefik
         fi
       SHELL
     end
