@@ -2,14 +2,8 @@
 
 variable "cluster_name" {
   type        = string
-  default     = "talos-platform"
+  default     = "k3s-platform"
   description = "Name of the Kubernetes cluster"
-}
-
-variable "talos_version" {
-  type        = string
-  default     = "v1.7.0"
-  description = "Talos OS version to use"
 }
 
 variable "kubernetes_version" {
@@ -38,13 +32,13 @@ variable "vm_disk" {
 
 variable "network_cidr" {
   type        = string
-  default     = "192.168.1.0/24"
+  default     = "192.168.56.0/24"
   description = "Network CIDR for the cluster"
 }
 
 variable "metallb_pool" {
   type        = string
-  default     = "192.168.1.240-192.168.1.250"
+  default     = "192.168.56.240-192.168.56.250"
   description = "IP range for MetalLB LoadBalancer services"
 }
 
@@ -55,15 +49,15 @@ variable "control_plane_nodes" {
   }))
   default = {
     cp1 = {
-      ip   = "192.168.1.101"
+      ip   = "192.168.56.101"
       role = "controlplane"
     }
     cp2 = {
-      ip   = "192.168.1.102"
+      ip   = "192.168.56.102"
       role = "controlplane"
     }
     cp3 = {
-      ip   = "192.168.1.103"
+      ip   = "192.168.56.103"
       role = "controlplane"
     }
   }
@@ -77,11 +71,11 @@ variable "worker_nodes" {
   }))
   default = {
     worker1 = {
-      ip   = "192.168.1.104"
+      ip   = "192.168.56.104"
       role = "worker"
     }
     worker2 = {
-      ip   = "192.168.1.105"
+      ip   = "192.168.56.105"
       role = "worker"
     }
   }

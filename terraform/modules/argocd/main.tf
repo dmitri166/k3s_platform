@@ -17,34 +17,13 @@ terraform {
   }
 }
 
-variable "argocd_namespace" {
-  type        = string
-  default     = "argocd"
-  description = "ArgoCD namespace"
-}
-
-variable "argocd_helm_config" {
-  type = object({
-    repository = string
-    chart      = string
-    version    = string
-  })
-  description = "ArgoCD Helm chart configuration"
-}
-
-variable "argocd_values" {
-  type        = any
-  default     = {}
-  description = "ArgoCD Helm values"
-}
-
 # Create namespace
 resource "kubernetes_namespace" "argocd" {
   metadata {
     name = var.argocd_namespace
     labels = {
       "app.kubernetes.io/name" = "argocd"
-      "app.kubernetes.io/part-of" = "argocd"
+      "app.kubernetes.io/part-of" = "talos-platform"
     }
   }
 }
@@ -78,7 +57,7 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace.argocd.metadata[0].name
   
   values = [
-    merge(var.argocd_values, {
+    yamlencode(merge(var.argocd_values, {
       server = {
         service = {
           type = "LoadBalancer"
@@ -92,7 +71,7 @@ resource "helm_release" "argocd" {
           }
         }
       }
-    })
+    }))
   ]
   
   depends_on = [

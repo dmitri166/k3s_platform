@@ -1,10 +1,10 @@
-# Talos On-Premises Platform
+# K3s On-Premises Platform
 
-A production-ready on-premises Kubernetes platform built with Talos OS, optimized for laptop development while maintaining enterprise-grade features.
+A production-ready on-premises Kubernetes platform built with K3s, optimized for laptop development while maintaining enterprise-grade features.
 
 ## Overview
 
-This project provides a complete Kubernetes platform that mirrors cloud-native EKS functionality but runs entirely on-premises using Talos OS. It's designed for development, testing, and learning while following production best practices.
+This project provides a complete Kubernetes platform that mirrors cloud-native EKS functionality but runs entirely on-premises using K3s. It's designed for development, testing, and learning while following production best practices.
 
 ## Architecture
 
@@ -12,11 +12,11 @@ This project provides a complete Kubernetes platform that mirrors cloud-native E
 ┌─────────────────────────────────────────────────────────────┐
 │                    Host Machine (16GB RAM)                   │
 ├─────────────────────────────────────────────────────────────┤
-│  Multipass VMs (10GB RAM, 10 CPU cores total)               │
+│  VirtualBox VMs (8GB RAM, 10 CPU cores total)               │
 │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ │
 │  │   cp1   │ │   cp2   │ │   cp3   │ │worker1  │ │worker2  │ │
-│  │ 2GB RAM │ │ 2GB RAM │ │ 2GB RAM │ │ 2GB RAM │ │ 2GB RAM │ │
-│  │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │
+│  │ 2GB RAM │ │ 2GB RAM │ │ 2GB RAM │ │1.5GB RAM│ │1.5GB RAM│ │
+│  │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │ 1 CPU   │ │ 1 CPU   │ │
 │  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -24,9 +24,10 @@ This project provides a complete Kubernetes platform that mirrors cloud-native E
 ## Features
 
 ### Infrastructure
-- **Talos OS**: Minimalist, secure, immutable Kubernetes operating system
-- **Multipass**: Lightweight VM management for local development
-- **Terraform**: Infrastructure as Code for reproducible deployments
+- **K3s**: Lightweight, certified Kubernetes distribution
+- **VirtualBox**: VM management for local development
+- **Vagrant**: Infrastructure automation and reproducibility
+- **Terraform**: Infrastructure as Code for platform services
 - **MetalLB**: LoadBalancer implementation for on-premises environments
 - **High Availability**: 3-node control plane with 2 worker nodes
 
@@ -60,43 +61,40 @@ This project provides a complete Kubernetes platform that mirrors cloud-native E
 
 Ensure you have the following tools installed:
 
-- **Multipass**: VM management
+- **VirtualBox**: VM management
+- **Vagrant**: Infrastructure automation
 - **Terraform**: Infrastructure as Code
-- **Helm**: Kubernetes package manager
-- **Talosctl**: Talos cluster management
 - **kubectl**: Kubernetes CLI
-- **Python 3.12+**: Scripting support
 - **PowerShell**: Windows automation
 
 ### Installation
 
-1. **Clone the repository**:
-   ```bash
-   cd D:\talos_platform
-   git init
-   git add .
-   git commit -m "Initial commit: Talos platform infrastructure"
+1. **Deploy K3s cluster**:
+   ```powershell
+   .\scripts\k3s-deploy.ps1
    ```
 
-2. **Initialize Terraform**:
+2. **Deploy platform services**:
    ```bash
+   cd terraform
    terraform init
+   terraform apply
    ```
 
-3. **Deploy the platform**:
-   ```bash
-   terraform apply -auto-approve
+3. **Verify deployment**:
+   ```powershell
+   .\scripts\k3s-platform-verify.ps1
    ```
 
 ### Access Services
 
 After deployment, access the services at:
 
-- **ArgoCD**: http://192.168.1.240
-- **Applications**: http://192.168.1.241
-- **Grafana**: http://192.168.1.242
-- **Prometheus**: http://192.168.1.243
-- **Vault**: http://192.168.1.244
+- **ArgoCD**: http://192.168.56.240
+- **Applications**: http://192.168.56.241
+- **Grafana**: http://192.168.56.242
+- **Prometheus**: http://192.168.56.243
+- **Vault**: http://192.168.56.244
 
 ### Get Credentials
 
@@ -104,9 +102,9 @@ After deployment, access the services at:
 # Get ArgoCD admin password
 terraform output -raw argocd_admin_password
 
-# Get cluster kubeconfig
-talosctl kubeconfig > ~/.kube/config-talos
-export KUBECONFIG=~/.kube/config-talos
+# Access cluster via kubectl
+export KUBECONFIG=~/.kube/config-k3s
+kubectl get nodes
 ```
 
 ## Architecture Details
@@ -114,27 +112,35 @@ export KUBECONFIG=~/.kube/config-talos
 ### Network Configuration
 
 ```
-Network: 192.168.1.0/24
-├── Host: 192.168.1.100
-├── Multipass VMs: 192.168.1.101-192.168.1.105
-└── MetalLB Pool: 192.168.1.240-192.168.1.250
-    ├── ArgoCD: 192.168.1.240
-    ├── Ingress: 192.168.1.241
-    ├── Grafana: 192.168.1.242
-    ├── Prometheus: 192.168.1.243
-    └── Vault: 192.168.1.244
+Network: 192.168.56.0/24
+├── Host: 192.168.56.1
+├── Control Plane:
+│   ├── cp1: 192.168.56.101
+│   ├── cp2: 192.168.56.102
+│   └── cp3: 192.168.56.103
+└── Workers:
+    ├── worker1: 192.168.56.104
+    └── worker2: 192.168.56.105
+```
+
+### LoadBalancer IP Pool
+
+```
+MetalLB IP Range: 192.168.56.240-192.168.56.250
+├── ArgoCD: 192.168.56.240
+├── Ingress: 192.168.56.241
+├── Grafana: 192.168.56.242
+├── Prometheus: 192.168.56.243
+└── Vault: 192.168.56.244
 ```
 
 ### Resource Allocation
 
-| Component | RAM | CPU | Purpose |
+| Node Type | RAM | CPU | Purpose |
 |-----------|-----|-----|---------|
-| cp1 | 2GB | 2 | Control plane + Vault |
-| cp2 | 2GB | 2 | Control plane |
-| cp3 | 2GB | 2 | Control plane |
-| worker1 | 2GB | 2 | Applications |
-| worker2 | 2GB | 2 | Applications |
-| Host | 6GB | 2 | System reserve |
+| Control Plane | 2GB | 2 | HA etcd + API server |
+| Workers | 1.5GB | 1 | Application workloads |
+| **Total** | **9GB** | **8** | **Complete platform** |
 
 ## GitOps Workflow
 

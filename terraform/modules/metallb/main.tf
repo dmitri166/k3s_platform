@@ -13,24 +13,13 @@ terraform {
   }
 }
 
-variable "metallb_namespace" {
-  type        = string
-  default     = "metallb-system"
-  description = "MetalLB namespace"
-}
-
-variable "metallb_config" {
-  type        = any
-  description = "MetalLB configuration"
-}
-
 # Create namespace
 resource "kubernetes_namespace" "metallb" {
   metadata {
     name = var.metallb_namespace
     labels = {
       "app.kubernetes.io/name" = "metallb"
-      "app.kubernetes.io/part-of" = "metallb"
+      "app.kubernetes.io/part-of" = "talos-platform"
     }
   }
 }

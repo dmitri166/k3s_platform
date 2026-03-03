@@ -1,23 +1,23 @@
-# Vault OSS secrets management configuration
+# Vault OSS secrets management configuration (optimized for small workers)
 replicaCount: 1
 
 resources:
   requests:
-    cpu: 250m
-    memory: 256Mi
+    cpu: 100m
+    memory: 128Mi
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 200m
+    memory: 256Mi
 
 # Enable Vault
 vault:
   resources:
     requests:
-      cpu: 250m
-      memory: 256Mi
+      cpu: 100m
+      memory: 128Mi
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 200m
+      memory: 256Mi
 
 # Enable UI
 ui:
@@ -32,22 +32,22 @@ injector:
   enabled: true
   resources:
     requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
       cpu: 100m
       memory: 128Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
 
 # Enable server
 server:
   enabled: true
   resources:
     requests:
-      cpu: 250m
-      memory: 256Mi
+      cpu: 100m
+      memory: 128Mi
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 200m
+      memory: 256Mi
 
 # Enable dev mode for testing
 global:

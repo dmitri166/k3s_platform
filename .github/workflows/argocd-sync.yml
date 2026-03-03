@@ -3,7 +3,7 @@ name: ArgoCD Sync
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ master ]
     paths:
       - 'apps/**'
       - 'namespaces/**'
