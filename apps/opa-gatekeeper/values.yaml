@@ -1,8 +1,8 @@
 ﻿# OPA Gatekeeper policy enforcement configuration
-replicas: 2
+replicas: 1
 
 controllerManager:
-  replicaCount: 2
+  replicaCount: 1
   resources:
     requests:
       cpu: 100m
@@ -28,7 +28,7 @@ validation:
   enabled: true
 
 webhook:
-  replicas: 2
+  replicas: 1
   resources:
     requests:
       cpu: 100m

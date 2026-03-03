@@ -1,5 +1,5 @@
 ﻿# External Secrets Operator configuration
-replicaCount: 2
+replicaCount: 1
 
 resources:
   requests:

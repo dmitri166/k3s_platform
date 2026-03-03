@@ -1,5 +1,16 @@
 # Falco runtime security monitoring configuration
-replicaCount: 2
+replicaCount: 1
+
+# Run Falco only on worker nodes to reduce pod count and control-plane load.
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/control-plane
+          operator: DoesNotExist
+        - key: node-role.kubernetes.io/etcd
+          operator: DoesNotExist
 
 resources:
   requests:

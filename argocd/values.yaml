@@ -51,7 +51,7 @@ dex:
   enabled: false
 
 notifications:
-  enabled: true
+  enabled: false
   resources:
     requests:
       cpu: 50m
