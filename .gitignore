@@ -190,3 +190,7 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# Vagrant
+.vagrant/
+
