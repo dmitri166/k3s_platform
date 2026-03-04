@@ -55,3 +55,60 @@ jobs:
         uses: ibiqlik/action-yamllint@v3
         with:
           file_or_dir: ./
+
+  trivy-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trivy Filesystem Scan (Vulnerabilities + Secrets)
+        id: trivy_fs
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-fs.sarif
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          scanners: vuln,secret
+
+      - name: Trivy IaC Scan (Terraform/Kubernetes Misconfigurations)
+        id: trivy_config
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: .
+          format: sarif
+          output: trivy-config.sarif
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+
+      - name: Upload Trivy FS SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-fs.sarif
+
+      - name: Upload Trivy Config SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-config.sarif
+
+      - name: Enforce Trivy Policy
+        if: always()
+        run: |
+          if [ "${{ steps.trivy_fs.outcome }}" = "failure" ] || [ "${{ steps.trivy_config.outcome }}" = "failure" ]; then
+            echo "Trivy found HIGH/CRITICAL issues."
+            exit 1
+          fi

@@ -260,9 +260,19 @@ apps/
 ### CI/CD Integration
 
 - **GitHub Actions**: Infrastructure validation and deployment
+- **Trivy (CI)**: Filesystem, secrets, and IaC security scanning on PR/push
 - **ArgoCD**: Application deployment and management
 - **Automated testing**: Health checks and validation
 - **Security scanning**: Code and infrastructure scanning
+
+### Trivy Security Scanning
+
+- CI workflow runs Trivy on every relevant PR/push:
+  - `fs` scan for vulnerabilities and secrets
+  - `config` scan for Terraform/Kubernetes misconfigurations
+- Policy: pipeline fails on `HIGH`/`CRITICAL`.
+- Findings are uploaded as SARIF to GitHub Security tab.
+- Optional later: deploy Trivy Operator in-cluster (higher runtime resource usage).
 
 ## Troubleshooting
 
