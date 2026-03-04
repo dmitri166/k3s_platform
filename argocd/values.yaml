@@ -19,13 +19,10 @@ server:
       cpu: 500m
       memory: 256Mi
   service:
-    type: LoadBalancer
-    loadBalancerIP: 192.168.56.245
+    type: NodePort
     ports:
       http: 80
       https: 443
-    annotations:
-      metallb.universe.tf/address-pool: default
 
 repoServer:
   replicas: 1

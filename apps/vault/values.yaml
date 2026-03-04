@@ -18,10 +18,7 @@ server:
 
 ui:
   enabled: true
-  serviceType: LoadBalancer
-  serviceIP: 192.168.56.244
-  serviceAnnotations:
-    metallb.universe.tf/address-pool: default
+  serviceType: NodePort
 
 injector:
   enabled: true
