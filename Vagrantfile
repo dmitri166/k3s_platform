@@ -1,10 +1,48 @@
 ﻿# Vagrantfile for K3s Platform - HA Kubernetes Cluster
 Vagrant.configure("2") do |config|
+  config.vm.boot_timeout = ENV.fetch("VM_BOOT_TIMEOUT", "900").to_i
+
   cluster_name   = ENV.fetch("CLUSTER_NAME", "k3s-platform")
   vm_box         = ENV.fetch("VM_BOX", "ubuntu/jammy64")
   k3s_version    = ENV.fetch("K3S_VERSION", "v1.34.4+k3s1")
   network_prefix = ENV.fetch("K3S_NET_PREFIX", "192.168.56")
-  hostonly_adapter = ENV.fetch("HOSTONLY_ADAPTER", "VirtualBox Host-Only Ethernet Adapter")
+  network_mode   = ENV.fetch("K3S_NETWORK_MODE", "bridged").downcase
+  hostonly_adapter = ENV["HOSTONLY_ADAPTER"]
+  bridge_adapter = ENV["BRIDGE_ADAPTER"]
+
+  if network_mode == "hostonly"
+    if hostonly_adapter.nil? || hostonly_adapter.strip.empty?
+      raise <<~MSG
+        HOSTONLY_ADAPTER is not set.
+        Run deployment via scripts/k3s-deploy.ps1 (recommended), or set HOSTONLY_ADAPTER explicitly.
+      MSG
+    end
+
+    begin
+      hostonlyifs_raw = `VBoxManage list hostonlyifs 2>&1`
+    rescue StandardError => e
+      raise "Failed to query VirtualBox host-only adapters: #{e.message}"
+    end
+
+    adapter_names = hostonlyifs_raw.scan(/^Name:\s+(.+)$/).flatten
+    unless adapter_names.include?(hostonly_adapter)
+      raise <<~MSG
+        HOSTONLY_ADAPTER '#{hostonly_adapter}' was not found in VirtualBox host-only adapters.
+        Available adapters: #{adapter_names.empty? ? "(none)" : adapter_names.join(", ")}
+        Run scripts/preflight-network.ps1 and use scripts/k3s-deploy.ps1.
+      MSG
+    end
+  elsif network_mode == "bridged"
+    if bridge_adapter.nil? || bridge_adapter.strip.empty?
+      raise <<~MSG
+        BRIDGE_ADAPTER is not set for bridged networking.
+        Set BRIDGE_ADAPTER to your host NIC name, for example:
+        BRIDGE_ADAPTER="Intel(R) Ethernet Controller" or BRIDGE_ADAPTER="Wi-Fi"
+      MSG
+    end
+  else
+    raise "K3S_NETWORK_MODE must be either 'bridged' or 'hostonly'."
+  end
   cp_memory      = ENV.fetch("CP_MEMORY_MB", "3072")
   cp_cpus        = ENV.fetch("CP_CPUS", "2")
   worker_memory  = ENV.fetch("WORKER_MEMORY_MB", "1024")
@@ -56,7 +94,11 @@ EOF
   (1..3).each do |i|
     config.vm.define "cp#{i}" do |cp|
       cp.vm.hostname = "cp#{i}"
-      cp.vm.network "private_network", ip: cp_ip.call(i), virtualbox__hostonly: hostonly_adapter
+      if network_mode == "bridged"
+        cp.vm.network "public_network", ip: cp_ip.call(i), bridge: bridge_adapter
+      else
+        cp.vm.network "private_network", ip: cp_ip.call(i), virtualbox__hostonly: hostonly_adapter
+      end
       if i == 1
         # Stable host access path for local tooling (kubectl/Terraform).
         cp.vm.network "forwarded_port", guest: 6443, host: 64430, host_ip: "127.0.0.1", auto_correct: true
@@ -137,7 +179,11 @@ EOF
   (1..2).each do |i|
     config.vm.define "worker#{i}" do |worker|
       worker.vm.hostname = "worker#{i}"
-      worker.vm.network "private_network", ip: worker_ip.call(i), virtualbox__hostonly: hostonly_adapter
+      if network_mode == "bridged"
+        worker.vm.network "public_network", ip: worker_ip.call(i), bridge: bridge_adapter
+      else
+        worker.vm.network "private_network", ip: worker_ip.call(i), virtualbox__hostonly: hostonly_adapter
+      end
       worker.vm.provider "virtualbox" do |vb|
         vb.name = "#{cluster_name}-worker#{i}"
         vb.memory = worker_memory

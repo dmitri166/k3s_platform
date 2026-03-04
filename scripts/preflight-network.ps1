@@ -18,9 +18,22 @@ function Ensure-Admin {
 }
 
 function Get-HostOnlyAdapter {
-    $adapter = Get-NetAdapter | Where-Object {
+    $candidates = Get-NetAdapter | Where-Object {
+        $_.InterfaceDescription -like "*VirtualBox Host-Only*" -or
+        $_.Name -like "*VirtualBox Host-Only*"
+    }
+
+    if (-not $candidates) {
+        throw "No VirtualBox host-only adapters found. Create one in VirtualBox Tools -> Network -> Host-only Networks."
+    }
+
+    $adapter = $candidates | Where-Object {
         $_.InterfaceDescription -eq $AdapterName -or $_.Name -eq $AdapterName
     } | Select-Object -First 1
+
+    if (-not $adapter) {
+        $adapter = $candidates | Select-Object -First 1
+    }
 
     if (-not $adapter) {
         throw "Adapter '$AdapterName' not found. Create it in VirtualBox Tools -> Network -> Host-only Networks."
@@ -38,12 +51,31 @@ function Ensure-AdapterUp([Microsoft.Management.Infrastructure.CimInstance]$adap
 
 function Ensure-HostIp([Microsoft.Management.Infrastructure.CimInstance]$adapter, [string]$networkPrefix) {
     $expectedIp = "$networkPrefix.1"
+    $allHostOnlyWithExpectedIp = Get-NetAdapter | Where-Object {
+        $_.InterfaceDescription -like "*VirtualBox Host-Only*" -or
+        $_.Name -like "*VirtualBox Host-Only*"
+    } | ForEach-Object {
+        $a = $_
+        Get-NetIPAddress -InterfaceIndex $a.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+            Where-Object { $_.IPAddress -eq $expectedIp } |
+            ForEach-Object { [PSCustomObject]@{ Name = $a.Name; ifIndex = $a.ifIndex; IPAddress = $_.IPAddress } }
+    }
+
+    if ($allHostOnlyWithExpectedIp.Count -eq 0) {
+        throw "No VirtualBox host-only adapter has $expectedIp/24. Fix Host-only adapter IPv4 in VirtualBox."
+    }
+
+    if ($allHostOnlyWithExpectedIp.Count -gt 1) {
+        $names = ($allHostOnlyWithExpectedIp | Select-Object -ExpandProperty Name | Sort-Object -Unique) -join ", "
+        throw "Multiple VirtualBox host-only adapters have $expectedIp/24 ($names). Keep exactly one to avoid split cluster networking."
+    }
+
     $ip = Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue |
         Where-Object { $_.IPAddress -eq $expectedIp } |
         Select-Object -First 1
 
     if (-not $ip) {
-        throw "Adapter '$($adapter.Name)' does not have $expectedIp/24. Fix Host-only adapter IPv4 in VirtualBox."
+        throw "Selected adapter '$($adapter.Name)' does not have $expectedIp/24."
     }
 }
 

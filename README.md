@@ -78,8 +78,14 @@ Ensure you have the following tools installed:
    ```powershell
    .\scripts\k3s-deploy.ps1
    ```
-
+if you want to use bridged networking:
+   ```powershell
+   $env:K3S_NETWORK_MODE="bridged"
+   $env:BRIDGE_ADAPTER="Wi-Fi"
+   vagrant up --no-parallel
+   ```
 3. **Deploy platform services**:
+   
    ```bash
    cd terraform
    terraform init
