@@ -32,7 +32,6 @@ cainjector:
       memory: 128Mi
 
 startupapicheck:
-  replicaCount: 1
   resources:
     requests:
       cpu: 10m
