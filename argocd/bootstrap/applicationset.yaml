@@ -64,54 +64,56 @@ spec:
         repoURL: https://kubernetes.github.io/ingress-nginx
         targetRevision: 4.11.3
         valuesPath: apps/ingress-nginx/values.yaml
+        skipCrds: false
       - name: cert-manager
         namespace: cert-manager
         chart: cert-manager
         repoURL: https://charts.jetstack.io
         targetRevision: v1.16.1
         valuesPath: apps/cert-manager/values.yaml
-      - name: kube-prometheus-stack
-        namespace: monitoring
-        chart: kube-prometheus-stack
-        repoURL: https://prometheus-community.github.io/helm-charts
-        targetRevision: 65.8.1
-        valuesPath: apps/kube-prometheus-stack/values.yaml
+        skipCrds: false
       - name: loki-stack
         namespace: monitoring
         chart: loki-stack
         repoURL: https://grafana.github.io/helm-charts
         targetRevision: 2.10.2
         valuesPath: apps/loki-stack/values.yaml
+        skipCrds: false
       - name: opa-gatekeeper
         namespace: gatekeeper-system
         chart: gatekeeper
         repoURL: https://open-policy-agent.github.io/gatekeeper/charts
         targetRevision: 3.17.1
         valuesPath: apps/opa-gatekeeper/values.yaml
+        skipCrds: false
       - name: falco
         namespace: falco
         chart: falco
         repoURL: https://falcosecurity.github.io/charts
         targetRevision: 4.21.0
         valuesPath: apps/falco/values.yaml
+        skipCrds: false
       - name: velero
         namespace: velero
         chart: velero
         repoURL: https://vmware-tanzu.github.io/helm-charts
         targetRevision: 8.3.0
         valuesPath: apps/velero/values.yaml
+        skipCrds: false
       - name: vault
         namespace: vault
         chart: vault
         repoURL: https://helm.releases.hashicorp.com
         targetRevision: 0.30.0
         valuesPath: apps/vault/values.yaml
+        skipCrds: false
       - name: external-secrets
         namespace: external-secrets
         chart: external-secrets
         repoURL: https://charts.external-secrets.io
         targetRevision: 0.10.5
         valuesPath: apps/external-secrets/values.yaml
+        skipCrds: false
   template:
     metadata:
       name: '{{name}}'
@@ -141,6 +143,60 @@ spec:
         syncOptions:
         - CreateNamespace=true
         - PrunePropagationPolicy=foreground
+        - ServerSideApply=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - name: kube-prometheus-stack
+        namespace: monitoring
+        chart: kube-prometheus-stack
+        repoURL: https://prometheus-community.github.io/helm-charts
+        targetRevision: 65.8.1
+        valuesPath: apps/kube-prometheus-stack/values.yaml
+  template:
+    metadata:
+      name: '{{name}}'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/name: '{{name}}'
+        app.kubernetes.io/part-of: k3s-platform
+    spec:
+      project: default
+      sources:
+      - repoURL: '{{repoURL}}'
+        chart: '{{chart}}'
+        targetRevision: '{{targetRevision}}'
+        helm:
+          skipCrds: true
+          valueFiles:
+          - '$values/{{valuesPath}}'
+      - repoURL: https://github.com/dmitri166/k3s_platform.git
+        targetRevision: HEAD
+        ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+        - PrunePropagationPolicy=foreground
+        - ServerSideApply=true
         retry:
           limit: 5
           backoff:
@@ -169,6 +225,8 @@ spec:
       labels:
         app.kubernetes.io/name: '{{name}}'
         app.kubernetes.io/part-of: k3s-platform
+      annotations:
+        argocd.argoproj.io/sync-wave: "-1"
     spec:
       project: default
       source:
@@ -185,6 +243,8 @@ spec:
         syncOptions:
         - CreateNamespace=true
         - PrunePropagationPolicy=foreground
+        - ServerSideApply=true
+        - Replace=true
         retry:
           limit: 5
           backoff:
