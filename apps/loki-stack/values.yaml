@@ -85,3 +85,7 @@ promtail:
 
 grafana:
   enabled: false  # Already deployed with prometheus stack
+  sidecar:
+    datasources:
+      enabled: false
+      isDefaultDatasource: false
