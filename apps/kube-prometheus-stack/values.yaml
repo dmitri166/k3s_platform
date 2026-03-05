@@ -3,13 +3,14 @@ prometheus:
   enabled: true
   service:
     type: NodePort
-  resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
-    limits:
-      cpu: 400m
-      memory: 512Mi
+  prometheusSpec:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 384Mi
+      limits:
+        cpu: 600m
+        memory: 768Mi
   retention: 7d
   storageSpec:
     volumeClaimTemplate:
@@ -24,13 +25,14 @@ alertmanager:
   enabled: true
   service:
     type: NodePort
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 192Mi
+      limits:
+        cpu: 300m
+        memory: 512Mi
 
 grafana:
   enabled: true
@@ -107,3 +109,20 @@ kubecost:
 
 prometheusOperator:
   createCustomResource: false
+  admissionWebhooks:
+    patch:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+    createSecretJob:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi

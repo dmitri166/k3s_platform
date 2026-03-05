@@ -19,10 +19,10 @@ metadata:
   namespace: monitoring
 spec:
   hard:
-    requests.cpu: "3"
-    requests.memory: 3Gi
-    limits.cpu: "6"
-    limits.memory: 6Gi
+    requests.cpu: "4"
+    requests.memory: 5Gi
+    limits.cpu: "8"
+    limits.memory: 8Gi
     persistentvolumeclaims: "10"
     pods: "30"
     services: "15"
@@ -50,4 +50,3 @@ spec:
       cpu: 100m
       memory: 128Mi
     type: Container
-
