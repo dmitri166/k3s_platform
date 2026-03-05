@@ -141,7 +141,6 @@ spec:
         syncOptions:
         - CreateNamespace=true
         - PrunePropagationPolicy=foreground
-        - ServerSideApply=true
         retry:
           limit: 5
           backoff:
@@ -194,7 +193,6 @@ spec:
         syncOptions:
         - CreateNamespace=true
         - PrunePropagationPolicy=foreground
-        - ServerSideApply=true
         retry:
           limit: 5
           backoff:
