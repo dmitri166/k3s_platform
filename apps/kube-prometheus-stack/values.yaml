@@ -45,22 +45,30 @@ alertmanager:
       limits:
         cpu: 300m
         memory: 512Mi
-    additionalConfig:
-      global:
-        smtp_smarthost: 'smtp.gmail.com:587'
-        smtp_from: 'dmitri.k2026.work@gmail.com'
-        smtp_auth_username: 'dmitri.k2026.work@gmail.com'
-        smtp_auth_password: 'djzklgfkswaahika'
-      route:
-        receiver: 'email-receiver'
-      receivers:
-      - name: 'email-receiver'
-        email_configs:
-        - to: 'dmitri.k2026.work@gmail.com'
-          from: 'dmitri.k2026.work@gmail.com'
-          smarthost: 'smtp.gmail.com:587'
-          auth_username: 'dmitri.k2026.work@gmail.com'
-          auth_password: 'djzklgfkswaahika'
+  extraVolumes:
+  - name: smtp-secret
+    secret:
+      secretName: smtp-secret
+  extraVolumeMounts:
+  - name: smtp-secret
+    mountPath: /etc/alertmanager/secrets
+  
+  additionalConfig:
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'dmitri.k2026.work@gmail.com'
+      smtp_auth_username: 'dmitri.k2026.work@gmail.com'
+      smtp_auth_password_file: '/etc/alertmanager/secrets/password'
+    route:
+      receiver: 'email-receiver'
+    receivers:
+    - name: 'email-receiver'
+      email_configs:
+      - to: 'dmitri.k2026.work@gmail.com'
+        from: 'dmitri.k2026.work@gmail.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'dmitri.k2026.work@gmail.com'
+        auth_password_file: '/etc/alertmanager/secrets/password'
 
 grafana:
   enabled: true
