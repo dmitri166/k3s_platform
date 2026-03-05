@@ -147,3 +147,47 @@ spec:
             duration: 5s
             factor: 2
             maxDuration: 3m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: prometheus-crds
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - name: prometheus-crds
+        path: example/prometheus-operator-crd
+        repoURL: https://github.com/prometheus-operator/prometheus-operator
+        targetRevision: v0.68.0
+        namespace: default
+  template:
+    metadata:
+      name: '{{name}}'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/name: '{{name}}'
+        app.kubernetes.io/part-of: k3s-platform
+    spec:
+      project: default
+      source:
+        repoURL: '{{repoURL}}'
+        targetRevision: '{{targetRevision}}'
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+        - PrunePropagationPolicy=foreground
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
