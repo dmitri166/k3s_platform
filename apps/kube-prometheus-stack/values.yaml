@@ -45,6 +45,22 @@ alertmanager:
       limits:
         cpu: 300m
         memory: 512Mi
+    additionalConfig: |
+      global:
+        smtp_smarthost: 'smtp.gmail.com:587'
+        smtp_from: 'dmitri.k2026.work@gmail.com'
+        smtp_auth_username: 'dmitri.k2026.work@gmail.com'
+        smtp_auth_password: 'djzklgfkswaahika'
+      route:
+        receiver: 'email-receiver'
+      receivers:
+      - name: 'email-receiver'
+        email_configs:
+        - to: 'dmitri.k2026.work@gmail.com'
+          from: 'dmitri.k2026.work@gmail.com'
+          smarthost: smtp.gmail.com:587
+          auth_username: 'dmitri.k2026.work@gmail.com'
+          auth_password: 'djzklgfkswaahika'
 
 grafana:
   enabled: true
@@ -138,3 +154,18 @@ prometheusOperator:
         limits:
           cpu: 100m
           memory: 128Mi
+
+prometheusRule:
+  enabled: true
+  spec:
+    groups:
+    - name: test-alerts
+      rules:
+      - alert: TestCPUThreshold
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80  # Change 80 to your desired threshold %
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Test alert: High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}%"
