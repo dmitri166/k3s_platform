@@ -45,7 +45,7 @@ alertmanager:
       limits:
         cpu: 300m
         memory: 512Mi
-    additionalConfig: |
+    additionalConfig:
       global:
         smtp_smarthost: 'smtp.gmail.com:587'
         smtp_from: 'dmitri.k2026.work@gmail.com'
