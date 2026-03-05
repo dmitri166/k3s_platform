@@ -194,3 +194,6 @@ temp/
 # Vagrant
 .vagrant/
 
+# AI Analysis – never commit secrets
+apps/ai-analysis/k8s/secret.yaml
+*.secret.yaml

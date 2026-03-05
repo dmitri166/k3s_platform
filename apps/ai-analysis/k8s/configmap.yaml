@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-analysis-config
+  namespace: ai-analysis
+  labels:
+    app.kubernetes.io/name: ai-analysis
+    app.kubernetes.io/part-of: k3s-platform
+data:
+  # These are non-sensitive configuration values.
+  # The GEMINI_API_KEY is stored in the 'gemini-api-key' Secret (not here).
+
+  PROMETHEUS_URL: "http://kube-prometheus-stack-prometheus.monitoring.svc:9090"
+  LOKI_URL:       "http://loki.monitoring.svc:3100"
+  GEMINI_MODEL:   "gemini-1.5-pro"
+
+  # Conservative RPM to stay within free-tier limits (60 rpm max)
+  GEMINI_MAX_RPM: "10"
+
+  # How many hours of historical data to analyse per run
+  LOOKBACK_HOURS: "24"
+
+  # Where to write reports inside the container (maps to the PVC)
+  REPORT_DIR: "/reports"
+
+  # How many days to keep old reports on the PVC before purging
+  REPORT_RETENTION_DAYS: "30"
+
+  # HTTP client timeout in seconds
+  HTTP_TIMEOUT_SECONDS: "30"
