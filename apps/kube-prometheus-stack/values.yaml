@@ -58,7 +58,7 @@ alertmanager:
         email_configs:
         - to: 'dmitri.k2026.work@gmail.com'
           from: 'dmitri.k2026.work@gmail.com'
-          smarthost: smtp.gmail.com:587
+          smarthost: 'smtp.gmail.com:587'
           auth_username: 'dmitri.k2026.work@gmail.com'
           auth_password: 'djzklgfkswaahika'
 
