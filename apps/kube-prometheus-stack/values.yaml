@@ -170,7 +170,7 @@ prometheusRule:
     - name: test-alerts
       rules:
       - alert: TestCPUThreshold
-        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80  # Change 80 to your desired threshold %
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 5  # Change 80 to your desired threshold %
         for: 1m
         labels:
           severity: warning
