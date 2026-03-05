@@ -27,7 +27,7 @@ spec:
     pods: "30"
     services: "15"
     secrets: "15"
-    configmaps: "15"
+    configmaps: "50"
 ---
 # Limit range for monitoring namespace
 apiVersion: v1

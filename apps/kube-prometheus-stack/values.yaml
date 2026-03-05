@@ -104,3 +104,6 @@ backstage:
 # Disable Kubecost for resource optimization
 kubecost:
   enabled: false
+
+prometheusOperator:
+  createCustomResource: false
