@@ -12,8 +12,7 @@ def build_rca_prompt(metrics: Dict[str, Any], logs: Dict[str, Any], traces: Dict
     events_json = json.dumps(events, indent=2, default=str)[:1000]
     anomalies_json = json.dumps(anomalies, indent=2, default=str)
 
-    return f"""Analyse the following real-time data collected from a K3s Kubernetes cluster on {analysis_date} and perform Root Cause Analysis (RCA) for detected anomalies.
-
+    data_summary = f"""
 ---
 ## DETECTED ANOMALIES
 {anomalies_json}
