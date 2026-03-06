@@ -6,10 +6,10 @@ import json
 
 def build_rca_prompt(metrics: Dict[str, Any], logs: Dict[str, Any], traces: Dict[str, Any], events: Dict[str, Any], anomalies: Dict[str, Any], analysis_date: str) -> str:
     """Construct the prompt with cluster data for RCA."""
-    metrics_json = json.dumps(metrics, indent=2, default=str)[:3000]
-    logs_json = json.dumps(logs, indent=2, default=str)[:2000]
-    traces_json = json.dumps(traces, indent=2, default=str)[:2000]
-    events_json = json.dumps(events, indent=2, default=str)[:1000]
+    metrics_json = json.dumps(metrics, indent=2, default=str)[:1000]
+    logs_json = json.dumps(logs, indent=2, default=str)[:1000]
+    traces_json = json.dumps(traces, indent=2, default=str)[:1000]
+    events_json = json.dumps(events, indent=2, default=str)[:500]
     anomalies_json = json.dumps(anomalies, indent=2, default=str)
 
     data_summary = f"""
