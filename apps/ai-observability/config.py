@@ -22,7 +22,7 @@ class Config(BaseSettings):
     # Parameters
     LOOKBACK_HOURS: int = 24
     HTTP_TIMEOUT_SECONDS: int = 30
-    GROQ_MODEL: str = "mixtral-8x7b-32768"
+    GROQ_MODEL: str = "llama3-8b-8192"
     GROQ_MAX_RPM: int = 30
     REPORT_DIR: str = "/reports"
 
