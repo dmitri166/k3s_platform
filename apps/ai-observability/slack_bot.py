@@ -89,9 +89,8 @@ class SlackBot:
             text=message
         )
 
-        # Optionally send full report if short
-        if len(report) < 3000:
-            self.web_client.chat_postMessage(
-                channel=channel,
-                text=f"Full RCA Report:\n{report}"
-            )
+        # Send full report truncated to 4000 chars
+        self.web_client.chat_postMessage(
+            channel=channel,
+            text=f"Full RCA Report:\n{report[:4000]}"
+        )
