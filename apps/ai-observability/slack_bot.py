@@ -74,7 +74,7 @@ class SlackBot:
             response = "I'm sorry, I can help with latency or anomaly queries. Mention me with 'latency' or 'anomaly'."
 
         # Send response
-        await self.web_client.chat_postMessage(
+        self.web_client.chat_postMessage(
             channel=channel,
             text=f"<@{user}> {response}"
         )
@@ -84,14 +84,14 @@ class SlackBot:
         channel = self.config.get('SLACK_CHANNEL', '#alerts')
 
         # Send summary
-        await self.web_client.chat_postMessage(
+        self.web_client.chat_postMessage(
             channel=channel,
             text=message
         )
 
         # Optionally send full report if short
         if len(report) < 3000:
-            await self.web_client.chat_postMessage(
+            self.web_client.chat_postMessage(
                 channel=channel,
                 text=f"Full RCA Report:\n{report}"
             )

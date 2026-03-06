@@ -14,7 +14,7 @@ data:
   TEMPO_URL:      "http://tempo.monitoring.svc:3100"
   GRAFANA_URL:    "http://kube-prometheus-stack-grafana.monitoring.svc:80"
 
-  GROQ_MODEL:   "llama-3.3-70b-versatile"
+  GROQ_MODEL:   "mixtral-8x7b-32768"
 
   # Conservative RPM to stay within free-tier limits
   GROQ_MAX_RPM: "30"
