@@ -26,7 +26,7 @@ logging.basicConfig(
 log = logging.getLogger("ai-observability")
 
 # Config with log
-config_dict = config.config.dict()
+config_dict = config.config.model_dump()
 config_dict['log'] = log
 
 async def main_loop():

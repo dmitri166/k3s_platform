@@ -27,7 +27,6 @@ class TempoCollector(BaseCollector):
                 params={
                     "start": start,
                     "end": end,
-                    "tags": "error=true",  # Example: traces with errors
                     "limit": 20,
                 },
                 timeout=self.config.get('HTTP_TIMEOUT_SECONDS', 30),
