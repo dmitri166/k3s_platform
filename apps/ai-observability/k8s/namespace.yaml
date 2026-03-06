@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-observability
+  labels:
+    app.kubernetes.io/name: ai-observability
+    app.kubernetes.io/part-of: k3s-platform

@@ -52,7 +52,7 @@ Vagrant.configure("2") do |config|
   worker_ip = ->(i) { "#{network_prefix}.#{103 + i}" }
 
   config.vm.box = vm_box
-  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.synced_folder ".", "/vagrant"
   config.vm.synced_folder "./scripts", "/vagrant/scripts", type: "virtualbox"
 
   # Prefer ephemeral keys over static insecure credentials.
@@ -65,7 +65,11 @@ Vagrant.configure("2") do |config|
     export DEBIAN_FRONTEND=noninteractive
 
     apt-get update
-    apt-get install -y curl wget gnupg software-properties-common ca-certificates netcat-openbsd
+    apt-get install -y curl wget gnupg software-properties-common ca-certificates netcat-openbsd docker.io
+
+    # Start Docker
+    systemctl start docker
+    systemctl enable docker
 
     # Disable swap (Kubernetes requirement)
     swapoff -a

@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-observability
+  namespace: ai-observability
+  labels:
+    app.kubernetes.io/name: ai-observability
+    app.kubernetes.io/part-of: k3s-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ai-observability
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ai-observability
+    spec:
+      serviceAccountName: ai-observability
+
+      # Do not auto-mount the default SA token (we use explicit RBAC)
+      automountServiceAccountToken: true
+
+      containers:
+        - name: ai-observability
+          # Image: replace with your registry path after `docker build`.
+          # Options:
+          #   a) DockerHub:  <dockerhub-user>/ai-observability:latest
+          #   b) Local k3s:  After `docker build` run:
+          #                  docker save ai-observability:local | k3s ctr images import -
+          #                  then set:  image: ai-observability:local
+          #                             imagePullPolicy: Never
+          image: ai-observability:local
+          imagePullPolicy: Never
+
+          # Inject non-sensitive config from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: ai-observability-config
+
+          # Inject the API keys from the Secret
+          env:
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-observability-secrets
+                  key: GROQ_API_KEY
+            - name: SLACK_APP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ai-observability-secrets
+                  key: SLACK_APP_TOKEN
+            - name: SLACK_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ai-observability-secrets
+                  key: SLACK_BOT_TOKEN
+            - name: GRAFANA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-observability-secrets
+                  key: GRAFANA_API_KEY
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          volumeMounts:
+            - name: reports
+              mountPath: /reports
+
+          # Security hardening
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false   # needs write access to /reports
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop: [ALL]
+
+      volumes:
+        - name: reports
+          persistentVolumeClaim:
+            claimName: ai-observability-reports

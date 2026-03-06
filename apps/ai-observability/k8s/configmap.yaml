@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-observability-config
+  namespace: ai-observability
+  labels:
+    app.kubernetes.io/name: ai-observability
+    app.kubernetes.io/part-of: k3s-platform
+data:
+  # Non-sensitive configuration values.
+
+  PROMETHEUS_URL: "http://kube-prometheus-stack-prometheus.monitoring.svc:9090"
+  LOKI_URL:       "http://loki.monitoring.svc:3100"
+  TEMPO_URL:      "http://tempo.monitoring.svc:3100"
+  GRAFANA_URL:    "http://kube-prometheus-stack-grafana.monitoring.svc:80"
+
+  GROQ_MODEL:   "llama-3.3-70b-versatile"
+
+  # Conservative RPM to stay within free-tier limits
+  GROQ_MAX_RPM: "30"
+
+  # How many hours of historical data to analyse per run
+  LOOKBACK_HOURS: "24"
+
+  # Where to write reports inside the container (maps to the PVC)
+  REPORT_DIR: "/reports"
+
+  # Slack channel for alerts
+  SLACK_CHANNEL: "C0AJVE6CCCD"
+
+  # Slack bot user ID
+  BOT_USER_ID: "U0AJZGT5PUJ"
+
+  # HTTP client timeout in seconds
+  HTTP_TIMEOUT_SECONDS: "30"

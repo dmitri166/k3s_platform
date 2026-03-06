@@ -1,0 +1,41 @@
+# opentelemetry-collector/values.yaml
+# DaemonSet deployment to receive traces and forward to Tempo.
+
+mode: daemonset
+
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  exporters:
+    otlp:
+      endpoint: tempo.monitoring.svc.cluster.local:4317
+      tls:
+        insecure: true
+
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        exporters: [otlp]
+      metrics: null
+      logs: null
+
+# Strictly constrain memory to prevent cluster starving
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# OTel ballast helps garbage collector stay within limits
+command:
+  extraArgs:
+    - "--set=service.telemetry.metrics.level=none"

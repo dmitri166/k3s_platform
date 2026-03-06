@@ -1,0 +1,34 @@
+# tempo/values.yaml
+# Minimal monolithic deployment for local 16GB K3s cluster.
+
+tempo:
+  retention: 24h
+
+# Extremely strict resource limits to prevent OOM
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+# Do not deploy the HA components, just a single monolith
+distributor:
+  enabled: false
+ingester:
+  enabled: false
+querier:
+  enabled: false
+queryFrontend:
+  enabled: false
+compactor:
+  enabled: false
+
+# Persistence required for local-path
+persistence:
+  enabled: true
+  size: 5Gi
+
+serviceMonitor:
+  enabled: true
