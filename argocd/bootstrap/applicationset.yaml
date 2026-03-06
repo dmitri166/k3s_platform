@@ -19,9 +19,6 @@ spec:
       - name: minio
         path: apps/minio
         namespace: minio
-      - name: ai-analysis
-        path: apps/ai-analysis/k8s
-        namespace: ai-analysis
       - name: ai-observability
         path: apps/ai-observability/k8s
         namespace: ai-observability
