@@ -18,8 +18,8 @@ class TempoCollector(BaseCollector):
         # For simplicity, query for traces with errors or high latency in the last hour
         # Tempo search API example
         search_url = f"{self.config['TEMPO_URL']}/api/search"
-        start = int((datetime.now(timezone.utc) - timedelta(hours=1)).timestamp() * 1000000)  # microseconds
-        end = int(datetime.now(timezone.utc).timestamp() * 1000000)
+        start = int((datetime.now(timezone.utc) - timedelta(hours=1)).timestamp() * 1000000000)  # nanoseconds
+        end = int(datetime.now(timezone.utc).timestamp() * 1000000000)
 
         try:
             resp = requests.get(
