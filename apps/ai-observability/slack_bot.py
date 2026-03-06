@@ -47,6 +47,8 @@ class SlackBot:
             event = req.payload["event"]
             if event["type"] == "app_mention":
                 asyncio.create_task(self.handle_mention(event))
+            elif event["type"] == "message" and event.get("channel_type") == "im" and "bot_id" not in event:
+                asyncio.create_task(self.handle_mention(event))
 
     async def handle_mention(self, event: Dict[str, Any]):
         """Handle @mention messages."""

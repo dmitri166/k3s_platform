@@ -10,7 +10,7 @@ data:
   # Non-sensitive configuration values.
 
   PROMETHEUS_URL: "http://kube-prometheus-stack-prometheus.monitoring.svc:9090"
-  LOKI_URL:       "http://loki.monitoring.svc:3100"
+  LOKI_URL:       "http://loki-stack.monitoring.svc:3100"
   TEMPO_URL:      "http://tempo.monitoring.svc:3100"
   GRAFANA_URL:    "http://kube-prometheus-stack-grafana.monitoring.svc:80"
 
