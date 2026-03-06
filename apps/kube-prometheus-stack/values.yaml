@@ -24,19 +24,19 @@ prometheus:
               matchExpressions:
                 - key: node-role.kubernetes.io/control-plane
                   operator: DoesNotExist
-    additionalPrometheusRules:
-    - spec:
-        groups:
-        - name: test-alerts
-          rules:
-          - alert: TestCPUThreshold
-            expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 5
-            for: 1m
-            labels:
-              severity: warning
-            annotations:
-              summary: "Test alert: High CPU usage on {{ $labels.instance }}"
-              description: "CPU usage is {{ $value }}%"
+  additionalPrometheusRules:
+  - spec:
+      groups:
+      - name: test-alerts
+        rules:
+        - alert: TestCPUThreshold
+          expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 5
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Test alert: High CPU usage on {{ $labels.instance }}"
+            description: "CPU usage is {{ $value }}%"
               
   storageSpec:
     volumeClaimTemplate:
