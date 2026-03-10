@@ -22,16 +22,9 @@ spec:
       automountServiceAccountToken: true
 
       containers:
-        - name: ai-observability
-          # Image: replace with your registry path after `docker build`.
-          # Options:
-          #   a) DockerHub:  <dockerhub-user>/ai-observability:latest
-          #   b) Local k3s:  After `docker build` run:
-          #                  docker save ai-observability:local | k3s ctr images import -
-          #                  then set:  image: ai-observability:local
-          #                             imagePullPolicy: Never
-          image: ai-observability:local
-          imagePullPolicy: Never
+       -  name: ai-observability
+          image: dmitri166/k3s-ai-observability:latest
+          imagePullPolicy: IfNotPresent
 
           # Inject non-sensitive config from ConfigMap
           envFrom:
