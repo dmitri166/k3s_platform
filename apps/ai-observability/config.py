@@ -15,7 +15,7 @@ class Config(BaseSettings):
 
     # URLs
     PROMETHEUS_URL: str = "http://prometheus.monitoring.svc.cluster.local"
-    LOKI_URL: str = "http://loki.monitoring.svc.cluster.local"
+    LOKI_URL: str = "http://loki-stack.monitoring.svc.cluster.local:3100/loki/api/v1/push"
     TEMPO_URL: str = "http://tempo.monitoring.svc.cluster.local:3100"
     GRAFANA_URL: str = "http://grafana.monitoring.svc.cluster.local"
 
