@@ -118,6 +118,23 @@ EOF
 
       cp.vm.provision "shell", inline: common_provision
 
+      # Build and import AI Observability image (only on cp1)
+      if i == 1
+        cp.vm.provision "shell", inline: <<-SHELL
+          set -euo pipefail
+          cd /vagrant/apps/ai-observability
+          if [ -f Dockerfile ]; then
+            echo "Building AI Observability image..."
+            docker build -t ai-observability:local .
+            echo "Importing AI Observability image to k3s..."
+            sudo docker save ai-observability:local | sudo k3s ctr images import -
+            echo "AI Observability image built and imported successfully"
+          else
+            echo "Dockerfile not found, skipping AI Observability image build"
+          fi
+        SHELL
+      end
+
       cp.vm.provision "shell", inline: <<-SHELL
         set -euo pipefail
         export INSTALL_K3S_VERSION="#{k3s_version}"
