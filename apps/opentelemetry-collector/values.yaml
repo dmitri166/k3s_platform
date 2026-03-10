@@ -40,6 +40,3 @@ resources:
     memory: 256Mi
 
 # OTel ballast helps garbage collector stay within limits
-command:
-  extraArgs:
-    - "--set=service.telemetry.metrics.level=none"
