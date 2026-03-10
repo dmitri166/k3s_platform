@@ -1,6 +1,3 @@
-# opentelemetry-collector/values.yaml
-# DaemonSet deployment to receive traces and forward to Tempo.
-
 mode: daemonset
 
 image:
@@ -12,7 +9,9 @@ config:
     otlp:
       protocols:
         grpc:
+          endpoint: 0.0.0.0:4317
         http:
+          endpoint: 0.0.0.0:4318
 
   exporters:
     otlp:
@@ -23,6 +22,9 @@ config:
   service:
     pipelines:
       traces:
+        receivers: [otlp]
+        exporters: [otlp]
+      metrics:
         receivers: [otlp]
         exporters: [otlp]
 
