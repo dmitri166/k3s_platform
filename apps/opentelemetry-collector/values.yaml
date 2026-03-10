@@ -33,7 +33,7 @@ config:
 # Strictly constrain memory to prevent cluster starving
 resources:
   requests:
-    cpu: 100m
+    cpu: 200m
     memory: 128Mi
   limits:
     cpu: 500m
