@@ -1,7 +1,7 @@
 ﻿# Vagrantfile for K3s Platform - HA Kubernetes Cluster
 Vagrant.configure("2") do |config|
-  config.vm.boot_timeout = ENV.fetch("VM_BOOT_TIMEOUT", "900").to_i
-
+  config.vm.boot_timeout = ENV.fetch("VM_BOOT_TIMEOUT", "1200").to_i
+  
   cluster_name   = ENV.fetch("CLUSTER_NAME", "k3s-platform")
   vm_box         = ENV.fetch("VM_BOX", "ubuntu/jammy64")
   k3s_version    = ENV.fetch("K3S_VERSION", "v1.34.4+k3s1")
