@@ -29,9 +29,6 @@ config:
         exporters: [otlp]
       metrics: null
       logs: null
-    telemetry:
-      metrics:
-        level: none
 
 # Strictly constrain memory to prevent cluster starving
 resources:
