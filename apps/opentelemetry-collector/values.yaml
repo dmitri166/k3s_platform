@@ -4,17 +4,15 @@
 mode: daemonset
 
 image:
-  repository: otel/opentelemetry-collector
-  tag: latest
+  repository: otel/opentelemetry-collector-contrib
+  tag: 0.102.1
 
 config:
   receivers:
     otlp:
       protocols:
         grpc:
-          endpoint: 0.0.0.0:4317
         http:
-          endpoint: 0.0.0.0:4318
 
   exporters:
     otlp:
@@ -27,12 +25,7 @@ config:
       traces:
         receivers: [otlp]
         exporters: [otlp]
-      metrics:
-        receivers: [otlp]
-        exporters: [otlp]
-      logs: null
 
-# Strictly constrain memory to prevent cluster starving
 resources:
   requests:
     cpu: 200m
@@ -40,5 +33,3 @@ resources:
   limits:
     cpu: 500m
     memory: 256Mi
-
-# OTel ballast helps garbage collector stay within limits
