@@ -125,7 +125,7 @@ EOF
           cd /vagrant/apps/ai-observability
           if [ -f Dockerfile ]; then
             echo "Building AI Observability image..."
-            docker build -t ai-observability:local .
+            sudo docker build -t ai-observability:local .
             echo "Importing AI Observability image to k3s..."
             sudo docker save ai-observability:local | sudo k3s ctr images import -
             echo "AI Observability image built and imported successfully"

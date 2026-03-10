@@ -27,7 +27,9 @@ config:
       traces:
         receivers: [otlp]
         exporters: [otlp]
-      metrics: null
+      metrics:
+        receivers: [otlp]
+        exporters: [otlp]
       logs: null
 
 # Strictly constrain memory to prevent cluster starving
