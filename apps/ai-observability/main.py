@@ -14,10 +14,14 @@ from reporters.markdown import generate_markdown_report, save_report
 from reporters.grafana_annotator import annotate_grafana
 from slack_bot import SlackBot
 
-config_obj = Config()
-logging.basicConfig(level=config_obj.LOG_LEVEL)
+config = Config()
+logging.basicConfig(
+    level=getattr(logging, config.LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 log = logging.getLogger("ai-observability")
-config_dict = config_obj.model_dump()
+
+config_dict = config.model_dump()
 config_dict['log'] = log
 
 async def main_loop():
