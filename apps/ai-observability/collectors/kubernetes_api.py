@@ -13,10 +13,17 @@ class KubernetesAPICollector(BaseCollector):
 
     def __init__(self, cfg: Dict[str, Any]):
         super().__init__(cfg)
-        k8s_config.load_kube_config()
-        self.v1 = client.CoreV1Api()
-        self.apps_v1 = client.AppsV1Api()
-        self.networking_v1 = client.NetworkingV1Api()
+        try:
+            # Try in-cluster configuration first (when running in Kubernetes)
+            self.v1 = client.CoreV1Api()
+            self.apps_v1 = client.AppsV1Api()
+            self.networking_v1 = client.NetworkingV1Api()
+        except:
+            # Fall back to kubeconfig if in-cluster config fails (when running locally)
+            k8s_config.load_kube_config()
+            self.v1 = client.CoreV1Api()
+            self.apps_v1 = client.AppsV1Api()
+            self.networking_v1 = client.NetworkingV1Api()
 
     def collect(self) -> Dict[str, Any]:
         events = self._collect_events()
