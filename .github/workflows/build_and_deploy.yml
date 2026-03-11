@@ -1,0 +1,41 @@
+name: Build and Push AI Observability
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'apps/ai-observability/**'
+      - '.github/workflows/**'
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: dmitri166/k3s-ai-observability
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          logout: false
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/ai-observability
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify image
+        run: |
+          echo "Image pushed successfully: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"

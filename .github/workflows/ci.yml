@@ -2,7 +2,7 @@
 
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [ master ]
     paths:
       - 'terraform/**'
       - 'apps/**'
@@ -10,7 +10,7 @@ on:
       - 'argocd/**'
       - '.github/workflows/**'
   push:
-    branches: [ main, master ]
+    branches: [ master ]
     paths:
       - 'terraform/**'
       - 'apps/**'
