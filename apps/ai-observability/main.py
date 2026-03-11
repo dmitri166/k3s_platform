@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timezone
 
 from config import Config
-from collectors.prometheus_collector import PrometheusCollector
+from collectors.prometheus import PrometheusCollector
 from collectors.loki import LokiCollector
 from collectors.tempo import TempoCollector
 from collectors.kubernetes_api import KubernetesAPICollector
