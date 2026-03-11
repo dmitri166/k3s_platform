@@ -14,7 +14,7 @@ class TempoCollector(BaseCollector):
         end = time.time_ns()
         start = end - (1 * 60 * 60 * 1_000_000_000)  # 1 hour before
 
-        search_url = f"{self.config['TEMPO_URL']}/api/search"
+        search_url = f"{self.config['TEMPO_URL']}/api/traces/search"
 
         try:
             resp = requests.get(
