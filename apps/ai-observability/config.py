@@ -6,7 +6,9 @@ import os
 
 class Config(BaseSettings):
     """Configuration for AI Observability service."""
-
+    
+    LOG_LEVEL: str = "INFO"
+    
     # API Keys
     GROQ_API_KEY: str = ""
     SLACK_APP_TOKEN: str = ""
