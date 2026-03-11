@@ -89,4 +89,5 @@ async def main_loop():
         await asyncio.sleep(3600)
 
 if __name__ == "__main__":
+    # This will run the main_loop, which starts Slack bot + RCA loop
     asyncio.run(main_loop())

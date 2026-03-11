@@ -1,82 +1,89 @@
-"""Slack bot for AI Observability using synchronous Slack WebClient."""
+"""Async Slack SocketMode bot for AI observability alerts and queries."""
 
+import os
 import json
 import logging
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
-from typing import Any, Dict
+import asyncio
+from typing import Dict, Any
+
+from slack_sdk.web.async_client import AsyncWebClient
+from slack_sdk.socket_mode.aiohttp import SocketModeClient
+from slack_sdk.socket_mode.request import SocketModeRequest
+from slack_sdk.socket_mode.response import SocketModeResponse
 
 from ai.groq_client import GroqClient
-from analyzers.prompt_builder import build_rca_prompt  # Your existing prompt builder
 from collectors.prometheus import PrometheusCollector
 
-
 class SlackBot:
-    """Synchronous Slack bot for alerts and ad-hoc queries."""
+    """Async Slack bot using Socket Mode."""
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.web_client = WebClient(token=config['SLACK_BOT_TOKEN'])
+        self.web_client = AsyncWebClient(token=config["SLACK_BOT_TOKEN"])
+        self.socket_client = SocketModeClient(
+            app_token=config["SLACK_APP_TOKEN"],
+            web_client=self.web_client,
+        )
         self.groq_client = GroqClient(config)
         self.groq_client.initialize()
-        self.bot_user_id = config.get('BOT_USER_ID', '')
 
+        # Load BOT_USER_ID from config/env
+        self.bot_user_id = config.get("BOT_USER_ID") or os.getenv("BOT_USER_ID", "")
         if not self.bot_user_id:
             logging.warning("BOT_USER_ID is not set. Mentions may not be stripped correctly.")
 
-    def process_message(self, event: Dict[str, Any]):
-        """Process incoming Slack event message."""
-        if "bot_id" in event:
-            return  # Ignore messages from other bots
+    async def start(self):
+        """Start the async Socket Mode client."""
+        log = self.config.get("log", logging.getLogger(__name__))
+        log.info("Starting Slack SocketMode bot...")
+        self.socket_client.socket_mode_request_listeners.append(self.process)
+        await self.socket_client.connect()
 
+    async def process(self, client: SocketModeClient, req: SocketModeRequest):
+        """Process incoming SocketMode requests."""
+        if req.type == "events_api":
+            # Acknowledge
+            await client.send_socket_mode_response(SocketModeResponse(envelope_id=req.envelope_id))
+            event = req.payload.get("event", {})
+            if event.get("type") == "app_mention":
+                asyncio.create_task(self.handle_mention(event))
+            elif event.get("type") == "message" and event.get("channel_type") == "im" and "bot_id" not in event:
+                asyncio.create_task(self.handle_mention(event))
+
+    async def handle_mention(self, event: Dict[str, Any]):
+        """Handle messages where the bot is mentioned."""
         text = event.get("text", "")
         channel = event.get("channel")
         user = event.get("user")
 
-        if not text or not channel or not user:
-            return
-
-        # Remove bot mention if present
+        # Strip bot mention
         if self.bot_user_id:
             text = text.replace(f"<@{self.bot_user_id}>", "").strip()
 
-        logging.info("Received message: '%s' from user %s", text, user)
+        log = self.config.get("log", logging.getLogger(__name__))
+        log.info("Received mention: %s from %s", text, user)
 
-        # Handle ad-hoc queries
-        response_text = self.handle_query(text)
-
-        # Send response
-        self.send_message(channel, f"<@{user}> {response_text}")
-
-    def handle_query(self, message: str) -> str:
-        """Handle user queries and send to Groq if relevant."""
-        if "latency" in message.lower():
+        # Example: respond to 'latency' messages
+        if "latency" in text.lower():
             collector = PrometheusCollector(self.config)
             metrics = collector.collect()
             prompt = f"Analyze latency issues: {json.dumps(metrics.get('api_latency_p99_seconds', []), indent=2)}"
-            return self.groq_client.analyze(prompt)
-
-        elif "anomaly" in message.lower():
-            # Could build a custom prompt for anomalies
-            prompt = "Analyze anomalies in the cluster over the last 24h"
-            return self.groq_client.analyze(prompt)
-
+            response = self.groq_client.analyze(prompt)
         else:
-            return "I'm sorry, I can help with 'latency' or 'anomaly' queries. Please mention me with one of those keywords."
+            response = (
+                "I'm sorry, I can help with latency or anomaly queries. "
+                "Mention me with 'latency' or 'anomaly'."
+            )
 
-    def send_message(self, channel: str, text: str):
-        """Send a message to Slack channel."""
-        try:
-            # Truncate to 4000 chars
-            truncated_text = text[:4000]
-            self.web_client.chat_postMessage(channel=channel, text=truncated_text)
-            logging.info("Sent message to Slack channel %s", channel)
-        except SlackApiError as e:
-            logging.error("Failed to send message to Slack: %s", e.response['error'])
+        await self.web_client.chat_postMessage(channel=channel, text=f"<@{user}> {response}")
 
-    def send_alert(self, message: str, report: str):
-        """Send alert + full RCA report to Slack."""
+    async def send_alert(self, message: str, report: str):
+        """Send alert to Slack channel."""
         channel = self.config.get("SLACK_CHANNEL", "#alerts")
-        self.send_message(channel, message)
-        self.send_message(channel, f"Full RCA Report:\n{report[:4000]}")
-        
+        try:
+            await self.web_client.chat_postMessage(channel=channel, text=message)
+            await self.web_client.chat_postMessage(
+                channel=channel, text=f"Full RCA Report:\n{report[:4000]}"
+            )
+        except Exception as e:
+            logging.error("Failed to send alert to Slack: %s", e)
