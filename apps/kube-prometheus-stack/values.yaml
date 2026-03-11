@@ -14,7 +14,7 @@ prometheus:
         cpu: 400m
         memory: 768Mi
       limits:
-         cpu: 600m       # lower from 1000m
+         cpu: 500m       # lower from 1000m
          memory: 1Gi
     affinity:
       nodeAffinity:
@@ -44,7 +44,7 @@ alertmanager:
         cpu: 100m
         memory: 192Mi
       limits:
-        cpu: 300m
+        cpu: 200m
         memory: 512Mi
   extraVolumes:
   - name: smtp-secret
