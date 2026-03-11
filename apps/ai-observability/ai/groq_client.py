@@ -33,6 +33,9 @@ class GroqClient:
         log = self.config.get('log', logging.getLogger(__name__))
         log.info("Sending prompt to Groq model '%s' …", self.config.get('GROQ_MODEL', 'llama3-8b-8192'))
 
+        # Fix: Ensure prompt is never None or empty
+        safe_prompt = str(prompt) if prompt else "No data available for analysis."
+
         try:
             response = self.client.chat.completions.create(
                 model=self.config.get('GROQ_MODEL', 'llama3-8b-8192'),
@@ -43,7 +46,7 @@ class GroqClient:
                     },
                     {
                         "role": "user",
-                        "content": prompt,
+                        "content": safe_prompt,  # guaranteed non-null
                     }
                 ],
                 temperature=0.2,
