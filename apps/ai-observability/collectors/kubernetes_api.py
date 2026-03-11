@@ -14,12 +14,19 @@ class KubernetesAPICollector(BaseCollector):
     def __init__(self, cfg: Dict[str, Any]):
         super().__init__(cfg)
         try:
-            # Try in-cluster configuration first (when running in Kubernetes)
+            # Let the client auto-detect in-cluster configuration
             self.v1 = client.CoreV1Api()
             self.apps_v1 = client.AppsV1Api()
             self.networking_v1 = client.NetworkingV1Api()
-        except:
-            # Fall back to kubeconfig if in-cluster config fails (when running locally)
+        except Exception as e:
+            # Add detailed logging to understand the root cause
+            log = self.config.get("log", print)
+            log.error("Failed to initialize Kubernetes client: %s", str(e))
+            log.error("Checking if service account token exists: %s", 
+                    os.path.exists("/var/run/secrets/kubernetes.io/serviceaccount/token"))
+            log.error("Checking if CA certificate exists: %s",
+                    os.path.exists("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"))
+            # Fall back to kubeconfig if in-cluster config fails
             k8s_config.load_kube_config()
             self.v1 = client.CoreV1Api()
             self.apps_v1 = client.AppsV1Api()
