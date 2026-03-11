@@ -14,8 +14,8 @@ prometheus:
         cpu: 400m
         memory: 768Mi
       limits:
-        cpu: 1000m
-        memory: 1536Mi
+         cpu: 600m       # lower from 1000m
+         memory: 1Gi
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
