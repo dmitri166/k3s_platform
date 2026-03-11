@@ -1,13 +1,31 @@
+"""Advanced Prometheus collector mapping metrics to all Kubernetes resources."""
+
 import logging
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 import requests
 
 from .base import BaseCollector
 
 class PrometheusCollector(BaseCollector):
-    """Collect metrics from Prometheus for AI observability."""
+    """Collector for Prometheus metrics."""
 
-    MAX_RESULTS = 20
+    MAX_RESULTS = 50
+
+    RESOURCE_QUERIES = {
+        "node": {
+            "cpu_pct": '100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)',
+            "memory_pct": '(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100',
+        },
+        "pod": {
+            "restart_spikes": 'sum(increase(kube_pod_container_status_restarts_total[10m])) by (namespace,pod)',
+            "oom_killed": 'kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}',
+            "crashloopbackoff": 'kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}',
+        },
+        "namespace": {
+            "cpu_usage": 'sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace)',
+            "memory_usage": 'sum(container_memory_working_set_bytes{container!=""}) by (namespace)',
+        },
+    }
 
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
@@ -16,6 +34,16 @@ class PrometheusCollector(BaseCollector):
         self.log = config.get("log") or logging.getLogger(__name__)
         self.session = requests.Session()
 
+    def collect(self) -> Dict[str, Any]:
+        self.log.info("Collecting Prometheus metrics for all resources...")
+        results = {}
+        for rtype, queries in self.RESOURCE_QUERIES.items():
+            results[rtype] = {}
+            for metric_name, query in queries.items():
+                data = self._prom_query(query)
+                results[rtype][metric_name] = self._simplify(data)
+        return results
+
     def _prom_query(self, query: str) -> List[Dict]:
         url = f"{self.prometheus_url}/api/v1/query"
         try:
@@ -23,59 +51,21 @@ class PrometheusCollector(BaseCollector):
             r.raise_for_status()
             data = r.json()
             if data.get("status") != "success":
-                self.log.warning("Prometheus query failed for '%s'", query)
+                self.log.warning("Prometheus returned non-success for query: %s", query)
                 return []
             return data["data"]["result"]
         except Exception as e:
-            self.log.error("Prometheus query error: %s", e)
+            self.log.error("Prometheus query failed: %s", e)
             return []
 
-    def _simplify(self, results: List[Dict]) -> List[Dict]:
+    def _simplify(self, result_list: List[Dict]) -> List[Dict]:
         simplified = []
-        for item in results:
-            metric = item.get("metric", {})
+        for item in result_list[: self.MAX_RESULTS]:
+            metric = dict(item.get("metric", {}))
             val = item.get("value")
-            entry = dict(metric)
-            try:
-                if val and len(val) == 2:
-                    entry["value"] = float(val[1])
-                else:
-                    entry["value"] = None
-            except Exception:
-                entry["value"] = None
-            simplified.append(entry)
-        return simplified[:self.MAX_RESULTS]
-
-    def _convert_memory_mb(self, metrics: List[Dict]) -> List[Dict]:
-        for m in metrics:
-            val = m.get("value")
-            if isinstance(val, (int, float)):
-                m["value_mb"] = round(val / 1024 / 1024, 2)
-        return metrics
-
-    def collect(self) -> Dict[str, Any]:
-        """Collect all AI observability metrics."""
-        self.log.info("Collecting Prometheus metrics")
-        queries = {
-            "cpu_by_namespace": 'sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace)',
-            "memory_by_namespace": 'sum(container_memory_working_set_bytes{container!=""}) by (namespace)',
-            "node_cpu_pct": '100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)',
-            "node_memory_pct": '(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)/node_memory_MemTotal_bytes*100',
-            "pod_restart_spikes": 'sum(increase(kube_pod_container_status_restarts_total[10m])) by (namespace,pod)',
-            "crashloopbackoff": 'kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}',
-            "oom_killed": 'kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}',
-            "unhealthy_pods": 'kube_pod_status_phase{phase!~"Running|Succeeded"}',
-            "pending_pods": 'kube_pod_status_phase{phase="Pending"}',
-            "pvc_usage_pct": '(kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) * 100',
-            "api_latency_p99": 'histogram_quantile(0.99, sum(rate(apiserver_request_duration_seconds_bucket[5m])) by (le, verb))',
-            "api_error_rate": 'rate(apiserver_request_total{code=~"5.."}[5m])',
-        }
-
-        results = {}
-        for key, query in queries.items():
-            data = self._prom_query(query)
-            simplified = self._simplify(data)
-            if key == "memory_by_namespace":
-                simplified = self._convert_memory_mb(simplified)
-            results[key] = simplified
-        return results
+            if val and len(val) == 2:
+                metric["value"] = float(val[1])
+            else:
+                metric["value"] = None
+            simplified.append(metric)
+        return simplified

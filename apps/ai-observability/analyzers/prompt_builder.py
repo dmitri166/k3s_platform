@@ -1,27 +1,39 @@
-from typing import Dict, Any
+"""Build RCA prompt for LLM including metrics/logs/traces/events per resource."""
+
 import json
+from typing import Dict, Any
 
-def build_rca_prompt(metrics: Dict[str, Any], logs: Dict[str, Any], traces: Dict[str, Any], events: Dict[str, Any], anomalies: Any, analysis_date: str) -> str:
-    """Build RCA prompt for LLM."""
+def build_rca_prompt(metrics: Dict[str, Any],
+                     logs: Dict[str, Any],
+                     traces: Dict[str, Any],
+                     events: Dict[str, Any],
+                     anomalies: Dict[str, Any],
+                     analysis_date: str) -> str:
+
     prompt = f"""
-Date: {analysis_date}
+# Kubernetes Observability RCA
+**Analysis Date:** {analysis_date}
 
-Detected anomalies:
+## DETECTED ANOMALIES
 {json.dumps(anomalies, indent=2)}
 
-Metrics:
-{json.dumps(metrics, indent=2)[:2000]}
+## METRICS
+{json.dumps(metrics, indent=2)}
 
-Logs:
-{json.dumps(logs, indent=2)[:2000]}
+## LOGS
+{json.dumps(logs, indent=2)}
 
-Traces:
-{json.dumps(traces, indent=2)[:2000]}
+## TRACES
+{json.dumps(traces, indent=2)}
 
-Kubernetes events:
-{json.dumps(events, indent=2)[:1000]}
+## EVENTS
+{json.dumps(events, indent=2)}
 
-Task:
-Provide a concise root cause analysis, affected components, severity, and actionable remediation steps. Use Markdown tables and code blocks where helpful.
+## TASK
+Provide a resource-level Root Cause Analysis report in Markdown:
+- Include exact affected resources (pods, nodes, deployments, daemonsets, statefulsets, services, ingress, configmaps)
+- Include metrics, logs, traces, and events
+- Provide remediation commands (kubectl/helm) for each affected resource
+- Be concise and actionable
 """
     return prompt
