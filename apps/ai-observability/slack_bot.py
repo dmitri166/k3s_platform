@@ -10,7 +10,7 @@ from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
 from ai.groq_client import GroqClient
-from collectors.prometheus_collector import PrometheusCollector
+from collectors.prometheus import PrometheusCollector
 
 class SlackBot:
     """Async Slack bot for AI observability."""
