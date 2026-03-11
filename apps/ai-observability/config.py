@@ -14,10 +14,10 @@ class Config(BaseSettings):
     GRAFANA_API_KEY: str = ""
 
     # URLs
-    PROMETHEUS_URL: str = "http://prometheus.monitoring.svc.cluster.local"
+    PROMETHEUS_URL: str = "http://kube-prometheus-stack-prometheus.monitoring.svc:9090"
     LOKI_URL: str = "http://loki-stack.monitoring.svc.cluster.local:3100/loki/api/v1/push"
     TEMPO_URL: str = "http://tempo.monitoring.svc.cluster.local:3100"
-    GRAFANA_URL: str = "http://grafana.monitoring.svc.cluster.local"
+    GRAFANA_URL: str = "http://kube-prometheus-stack-grafana.monitoring.svc:80"
 
     # Parameters
     LOOKBACK_HOURS: int = 24
