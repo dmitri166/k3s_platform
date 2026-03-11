@@ -24,7 +24,7 @@ spec:
       containers:
        -  name: ai-observability
           image: dmitri166/k3s-ai-observability:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
 
           # Inject non-sensitive config from ConfigMap
           envFrom:
