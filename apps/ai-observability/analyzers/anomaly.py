@@ -1,69 +1,112 @@
-"""Anomaly detection engine using statistical methods."""
-
-import numpy as np
-import pandas as pd
+import logging
 from typing import Any, Dict, List
-from collections import defaultdict
 
 
-def detect_anomalies(metrics: Dict[str, Any], logs: Dict[str, Any], traces: Dict[str, Any], events: Dict[str, Any]) -> Dict[str, Any]:
-    """Detect anomalies in metrics, logs, traces, and events."""
-    anomalies = defaultdict(list)
+def detect_anomalies(metrics: Dict[str, Any], logs: Dict[str, Any], traces: Dict[str, Any], events: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Detect anomalies across Prometheus metrics, Loki logs, Tempo traces, and Kubernetes events.
 
-    # CPU/Memory spikes
-    for namespace_data in metrics.get("cpu_by_namespace", []):
-        if float(namespace_data.get("value", 0)) > 1.0:  # Example threshold, adjust based on baseline
-            anomalies["cpu_spikes"].append(namespace_data)
+    Returns a dict with keys:
+    - cpu
+    - memory
+    - pod_restarts
+    - oom_killed
+    - crashloop
+    - unhealthy_pods
+    - pending_pods
+    - api_errors
+    - log_errors
+    - log_warnings
+    - traces_errors
+    """
+    log = logging.getLogger("anomaly-detector")
 
-    for namespace_data in metrics.get("memory_by_namespace_mb", []):
-        mb_val = float(namespace_data.get("value", "0 MB").split()[0])
-        if mb_val > 1000:  # Example threshold
-            anomalies["memory_spikes"].append(namespace_data)
+    anomalies: Dict[str, List[Dict[str, Any]]] = {
+        "cpu": [],
+        "memory": [],
+        "pod_restarts": [],
+        "oom_killed": [],
+        "crashloop": [],
+        "unhealthy_pods": [],
+        "pending_pods": [],
+        "api_errors": [],
+        "log_errors": [],
+        "log_warnings": [],
+        "traces_errors": [],
+    }
 
-    # API latency spikes
-    for latency in metrics.get("api_latency_p99_seconds", []):
-        if float(latency.get("value", 0)) > 1.0:  # Example threshold
-            anomalies["latency_spikes"].append(latency)
+    # ------------------------------
+    # 1. CPU anomalies
+    cpu_metrics = metrics.get("node_cpu_pct", [])
+    for m in cpu_metrics:
+        if m.get("value") is not None and m["value"] > 85:
+            anomalies["cpu"].append({"node": m.get("instance"), "usage_pct": m["value"], "severity": "high"})
 
-    # Cross-reference errors with traces/events
-    error_logs = logs.get("recent_errors", [])
-    if error_logs:
-        anomalies["log_errors"].extend(error_logs[:10])
+    # ------------------------------
+    # 2. Memory anomalies
+    mem_metrics = metrics.get("node_memory_pct", [])
+    for m in mem_metrics:
+        if m.get("value") is not None and m["value"] > 85:
+            anomalies["memory"].append({"node": m.get("instance"), "usage_pct": m["value"], "severity": "high"})
 
-    crash_events = events.get("recent_events", [])
-    if crash_events:
-        anomalies["crash_events"].extend(crash_events[:10])
+    # ------------------------------
+    # 3. Pod restarts
+    pod_restarts = metrics.get("pod_restart_spikes", [])
+    for m in pod_restarts:
+        if m.get("value") and m["value"] > 3:
+            anomalies["pod_restarts"].append({
+                "namespace": m.get("namespace"),
+                "pod": m.get("pod"),
+                "restarts": m["value"],
+                "severity": "medium"
+            })
 
-    error_traces = traces.get("error_traces", [])
-    if error_traces:
-        anomalies["error_traces"].extend(error_traces[:10])
+    # ------------------------------
+    # 4. OOMKilled
+    oom = metrics.get("oom_killed", [])
+    for m in oom:
+        anomalies["oom_killed"].append({"namespace": m.get("namespace"), "pod": m.get("pod"), "severity": "high"})
 
-    return dict(anomalies)
+    # ------------------------------
+    # 5. CrashLoopBackOff
+    crash = metrics.get("crashloopbackoff", [])
+    for m in crash:
+        anomalies["crashloop"].append({"namespace": m.get("namespace"), "pod": m.get("pod"), "severity": "high"})
 
+    # ------------------------------
+    # 6. Unhealthy pods
+    unhealthy = metrics.get("unhealthy_pods", [])
+    for m in unhealthy:
+        anomalies["unhealthy_pods"].append({"namespace": m.get("namespace"), "pod": m.get("pod"), "phase": m.get("phase"), "severity": "medium"})
 
-def calculate_z_score(series: List[float]) -> List[float]:
-    """Calculate Z-scores for a series."""
-    if not series:
-        return []
-    mean = np.mean(series)
-    std = np.std(series)
-    if std == 0:
-        return [0] * len(series)
-    return [(x - mean) / std for x in series]
+    # ------------------------------
+    # 7. Pending pods
+    pending = metrics.get("pending_pods", [])
+    for m in pending:
+        anomalies["pending_pods"].append({"namespace": m.get("namespace"), "pod": m.get("pod"), "severity": "low"})
 
+    # ------------------------------
+    # 8. API errors
+    api_errors = metrics.get("api_error_rate", [])
+    for m in api_errors:
+        if m.get("value") and m["value"] > 0.01:  # threshold: 1% error rate
+            anomalies["api_errors"].append({"code": m.get("code"), "rate": m["value"], "severity": "medium"})
 
-# Example usage for moving averages, but simplified
-def moving_average_anomaly(data: List[float], window: int = 5) -> List[bool]:
-    """Detect anomalies using moving average."""
-    if len(data) < window:
-        return [False] * len(data)
-    anomalies = []
-    for i in range(len(data)):
-        start = max(0, i - window + 1)
-        avg = np.mean(data[start:i+1])
-        std = np.std(data[start:i+1])
-        if std > 0 and abs(data[i] - avg) > 2 * std:
-            anomalies.append(True)
-        else:
-            anomalies.append(False)
+    # ------------------------------
+    # 9. Log errors / warnings
+    for line in logs.get("recent_errors", []):
+        anomalies["log_errors"].append({"line": line, "severity": "medium"})
+    for line in logs.get("recent_warnings", []):
+        anomalies["log_warnings"].append({"line": line, "severity": "low"})
+
+    # ------------------------------
+    # 10. Tempo traces errors
+    for trace in traces.get("error_traces", []):
+        anomalies["traces_errors"].append({"trace_id": trace.get("traceID"), "severity": "medium"})
+
+    # ------------------------------
+    # Remove empty categories
+    anomalies = {k: v for k, v in anomalies.items() if v}
+
+    log.info("Detected anomalies: %s categories", len(anomalies))
     return anomalies

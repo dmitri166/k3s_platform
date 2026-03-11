@@ -1,58 +1,37 @@
-"""Loki collector for log data."""
-
-import requests
-from typing import Any, Dict, List
+import logging
 from datetime import datetime, timezone, timedelta
+from typing import Any, Dict, List
+import requests
 
 from .base import BaseCollector
-
 
 class LokiCollector(BaseCollector):
     """Collector for Loki logs."""
 
     def collect(self) -> Dict[str, Any]:
-        """Query Loki for error/warning patterns over the lookback window."""
-        log = self.config.get('log', print)
-        log.info("Collecting Loki logs …")
+        log = self.config.get("log", logging.getLogger(__name__))
+        log.info("Collecting Loki logs…")
 
-        end_ns = int(datetime.now(timezone.utc).timestamp() * 1e9)
-        start_ns = int((datetime.now(timezone.utc) - timedelta(hours=self.config.get('LOOKBACK_HOURS', 24))).timestamp() * 1e9)
+        now = datetime.now(timezone.utc)
+        start_ns = int((now - timedelta(hours=self.config.get("LOOKBACK_HOURS", 24))).timestamp() * 1e9)
+        end_ns = int(now.timestamp() * 1e9)
 
-        errors = self._loki_query(
-            '{namespace=~".+"} |= "error" | line_format "{{.namespace}} {{.pod}} {{.line}}"',
-            limit=100,
-            start_ns=start_ns,
-            end_ns=end_ns
-        )
-        warnings = self._loki_query(
-            '{namespace=~".+"} |= "warning" | line_format "{{.namespace}} {{.pod}} {{.line}}"',
-            limit=50,
-            start_ns=start_ns,
-            end_ns=end_ns
-        )
-        oom_logs = self._loki_query(
-            '{namespace=~".+"} |= "OOMKilled"',
-            limit=20,
-            start_ns=start_ns,
-            end_ns=end_ns
-        )
-        crash_logs = self._loki_query(
-            '{namespace=~".+"} |~ "CrashLoopBackOff|BackOff"',
-            limit=20,
-            start_ns=start_ns,
-            end_ns=end_ns
-        )
-
-        return {
-            "recent_errors": errors[:50],
-            "recent_warnings": warnings[:30],
-            "oom_events": oom_logs,
-            "crashloop_events": crash_logs,
+        queries = {
+            "recent_errors": '{namespace=~".+"} |= "error" | line_format "{{.namespace}} {{.pod}} {{.line}}"',
+            "recent_warnings": '{namespace=~".+"} |= "warning" | line_format "{{.namespace}} {{.pod}} {{.line}}"',
+            "oom_events": '{namespace=~".+"} |= "OOMKilled"',
+            "crashloop_events": '{namespace=~".+"} |~ "CrashLoopBackOff|BackOff"',
         }
 
-    def _loki_query(self, logql: str, limit: int = 50, start_ns: int = 0, end_ns: int = 0) -> List[str]:
-        """Execute a Loki query and return lines."""
+        results = {}
+        for key, q in queries.items():
+            results[key] = self._loki_query(q, start_ns=start_ns, end_ns=end_ns, limit=50 if "warnings" in key else 100)
+
+        return results
+
+    def _loki_query(self, logql: str, start_ns: int, end_ns: int, limit: int = 50) -> List[str]:
         url = f"{self.config['LOKI_URL']}/loki/api/v1/query_range"
+        log = self.config.get("log", logging.getLogger(__name__))
         try:
             resp = requests.get(
                 url,
@@ -63,16 +42,15 @@ class LokiCollector(BaseCollector):
                     "limit": limit,
                     "direction": "backward",
                 },
-                timeout=self.config.get('HTTP_TIMEOUT_SECONDS', 30),
+                timeout=self.config.get("HTTP_TIMEOUT_SECONDS", 30),
             )
             resp.raise_for_status()
             data = resp.json()
             lines: List[str] = []
             for stream in data.get("data", {}).get("result", []):
-                for _ts, line in stream.get("values", []):
+                for _, line in stream.get("values", []):
                     lines.append(line)
             return lines
         except Exception as exc:
-            log = self.config.get('log', print)
-            log.error("Loki query failed: %s – %s", logql, exc)
+            log.error("Loki query failed (%s): %s", logql, exc)
             return []

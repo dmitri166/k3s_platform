@@ -1,47 +1,27 @@
-"""Prompt builder for constructing RCA prompts."""
-
-from typing import Any, Dict
+from typing import Dict, Any
 import json
 
+def build_rca_prompt(metrics: Dict[str, Any], logs: Dict[str, Any], traces: Dict[str, Any], events: Dict[str, Any], anomalies: Any, analysis_date: str) -> str:
+    """Build RCA prompt for LLM."""
+    prompt = f"""
+Date: {analysis_date}
 
-def build_rca_prompt(metrics: Dict[str, Any], logs: Dict[str, Any], traces: Dict[str, Any], events: Dict[str, Any], anomalies: Dict[str, Any], analysis_date: str) -> str:
-    """Construct the prompt with cluster data for RCA."""
-    metrics_json = json.dumps(metrics, indent=2, default=str)[:1000]
-    logs_json = json.dumps(logs, indent=2, default=str)[:1000]
-    traces_json = json.dumps(traces, indent=2, default=str)[:1000]
-    events_json = json.dumps(events, indent=2, default=str)[:500]
-    anomalies_json = json.dumps(anomalies, indent=2, default=str)
+Detected anomalies:
+{json.dumps(anomalies, indent=2)}
 
-    data_summary = f"""
----
-## DETECTED ANOMALIES
-{anomalies_json}
+Metrics:
+{json.dumps(metrics, indent=2)[:2000]}
 
----
-## PROMETHEUS METRICS
-{metrics_json}
+Logs:
+{json.dumps(logs, indent=2)[:2000]}
 
----
-## LOKI LOGS
-{logs_json}
+Traces:
+{json.dumps(traces, indent=2)[:2000]}
 
----
-## TEMPO TRACES
-{traces_json}
+Kubernetes events:
+{json.dumps(events, indent=2)[:1000]}
 
----
-## KUBERNETES EVENTS
-{events_json}
-
----
-## YOUR TASK
-Provide a comprehensive Root Cause Analysis report in Markdown with the following sections:
-
-1. **Anomaly Summary** – List and describe detected anomalies.
-2. **Root Cause Analysis** – Explain probable causes for each anomaly, correlating metrics, logs, traces, and events.
-3. **Impact Assessment** – Describe potential impacts on the cluster.
-4. **Recommendations** – Actionable steps to resolve issues, including kubectl/helm commands.
-5. **Prevention Measures** – Suggestions to avoid future occurrences.
-
-Be specific, concise, and actionable. Use Markdown tables and code blocks where helpful.
+Task:
+Provide a concise root cause analysis, affected components, severity, and actionable remediation steps. Use Markdown tables and code blocks where helpful.
 """
+    return prompt
