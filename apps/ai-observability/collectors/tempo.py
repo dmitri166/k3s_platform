@@ -12,7 +12,7 @@ class TempoCollector(BaseCollector):
         log = self.config.get("log", print)
         log.info("Collecting Tempo traces …")
 
-        search_url = f"{self.config['TEMPO_URL']}/api/traces/search"
+        search_url = f"{self.config.TEMPO_URL}/api/traces/search"
         now = datetime.now(timezone.utc)
         start = int((now - timedelta(hours=1)).timestamp() * 1000)
         end = int(now.timestamp() * 1000)
