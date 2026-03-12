@@ -34,11 +34,11 @@ def build_rca_prompt(metrics: Dict[str, Any],
         return truncated
 
     # Truncate large datasets
-    truncated_metrics = truncate_data(metrics, 20)
-    truncated_logs = truncate_data(logs, 10)
-    truncated_traces = truncate_data(traces, 10)
-    truncated_events = events[:50] if isinstance(events, list) else truncate_data({"events": events}, 10).get("events", events)
-    truncated_anomalies = truncate_data(anomalies, 10)
+    truncated_metrics = truncate_data(metrics, 5)
+    truncated_logs = truncate_data(logs, 5)
+    truncated_traces = truncate_data(traces, 5)
+    truncated_events = events[:20] if isinstance(events, list) else truncate_data({"events": events}, 5).get("events", events)
+    truncated_anomalies = truncate_data(anomalies, 5)
 
     prompt = f"""
 # Kubernetes Observability RCA

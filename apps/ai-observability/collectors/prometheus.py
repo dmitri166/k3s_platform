@@ -12,17 +12,17 @@ class PrometheusCollector(BaseCollector):
 
     RESOURCE_QUERIES = {
         "node": {
-            "cpu_pct": 'avg_over_time(100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)[1h:5m])',
-            "memory_pct": 'avg_over_time((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100[1h:5m])',
+            "cpu_pct": '100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)',
+            "memory_pct": '(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100',
         },
         "pod": {
             "restart_spikes": 'sum(increase(kube_pod_container_status_restarts_total[1h])) by (namespace,pod)',
-            "oom_killed": 'sum_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[1h])',
-            "crashloopbackoff": 'sum_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[1h])',
+            "oom_killed": 'kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}',
+            "crashloopbackoff": 'kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}',
         },
         "namespace": {
-            "cpu_usage": 'avg_over_time(sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace)[1h:5m])',
-            "memory_usage": 'avg_over_time(sum(container_memory_working_set_bytes{container!=""}) by (namespace)[1h:5m])',
+            "cpu_usage": 'sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace)',
+            "memory_usage": 'sum(container_memory_working_set_bytes{container!=""}) by (namespace)',
         },
     }
 
