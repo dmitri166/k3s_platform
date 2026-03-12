@@ -58,7 +58,7 @@ async def main_loop():
         if anomalies:
             prompt = build_rca_prompt(metrics, logs, traces, events, anomalies, analysis_date)
             analysis = groq_client.analyze(prompt)
-            report_content = generate_markdown_report(analysis, metrics, logs, traces, events, anomalies, config_dict)
+            report_content = generate_markdown_report(analysis, metrics, logs, traces, events, anomalies, config)
             save_report(report_content, {
                 "date": analysis_date,
                 "metrics": metrics,
@@ -66,8 +66,8 @@ async def main_loop():
                 "traces": traces,
                 "events": events,
                 "anomalies": anomalies
-            }, config_dict)
-            annotate_grafana("AI Detected Anomalies", analysis[:200]+"...", ["ai","anomaly"], config_dict)
+            }, config)
+            annotate_grafana("AI Detected Anomalies", analysis[:200]+"...", ["ai","anomaly"], config)
             await slack_bot.send_alert(f"Anomalies detected: {len(anomalies)} categories.", report_content)
         else:
             log.info("No anomalies detected.")

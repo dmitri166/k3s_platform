@@ -18,6 +18,28 @@ def build_rca_prompt(metrics: Dict[str, Any],
                      anomalies: Dict[str, Any],
                      analysis_date: str) -> str:
 
+    # Truncate data to prevent token limits - keep only essential information
+    def truncate_data(data: Dict[str, Any], max_items: int = 10) -> Dict[str, Any]:
+        """Truncate dictionary data to prevent token limit issues."""
+        if not isinstance(data, dict):
+            return data
+        truncated = {}
+        for key, value in data.items():
+            if isinstance(value, list):
+                truncated[key] = value[:max_items]  # Keep only first N items
+            elif isinstance(value, dict):
+                truncated[key] = truncate_data(value, max_items)
+            else:
+                truncated[key] = value
+        return truncated
+
+    # Truncate large datasets
+    truncated_metrics = truncate_data(metrics, 20)
+    truncated_logs = truncate_data(logs, 10)
+    truncated_traces = truncate_data(traces, 10)
+    truncated_events = events[:50] if isinstance(events, list) else truncate_data({"events": events}, 10).get("events", events)
+    truncated_anomalies = truncate_data(anomalies, 10)
+
     prompt = f"""
 # Kubernetes Observability RCA
 **Analysis Date:** {analysis_date}
