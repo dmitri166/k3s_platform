@@ -132,7 +132,6 @@ EOF
             --cluster-init \
             --tls-san #{cp_ip.call(1)} \
             --tls-san #{cp_ip.call(2)} \
-            --tls-san #{cp_ip.call(3)} \
             --tls-san 127.0.0.1 \
             --tls-san localhost \
             --node-ip "$NODE_IP" \

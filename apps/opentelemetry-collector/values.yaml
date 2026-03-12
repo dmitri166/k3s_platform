@@ -28,6 +28,10 @@ config:
         receivers: [otlp]
         exporters: [otlp]
 
+  telemetry:
+    metrics:
+      address: ""
+
 resources:
   requests:
     cpu: 200m
