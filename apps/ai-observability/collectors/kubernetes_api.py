@@ -33,10 +33,10 @@ class KubernetesAPICollector(BaseCollector):
             self.apps_v1 = client.AppsV1Api()
             self.networking_v1 = client.NetworkingV1Api()
 
-    def collect(self) -> Dict[str, Any]:
+    def collect(self) -> tuple[List[Dict], Dict[str, Any]]:
         events = self._collect_events()
         resources = self.merge_observability_data(events)
-        return resources
+        return events, resources
 
     def _collect_events(self) -> List[Dict]:
         all_events = []
@@ -49,6 +49,8 @@ class KubernetesAPICollector(BaseCollector):
     def merge_observability_data(self, events: List[Dict]) -> Dict[str, Any]:
         data: Dict[str, Any] = {rtype: {} for rtype in self.RESOURCE_TYPES}
         for evt in events:
+            if not isinstance(evt, dict):
+                continue  # Skip non-dict events
             rtype = evt.get("involved_object", {}).get("kind", "").lower()
             rname = evt.get("involved_object", {}).get("name")
             if rtype in data and rname:

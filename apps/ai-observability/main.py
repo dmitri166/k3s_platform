@@ -43,10 +43,9 @@ async def main_loop():
         metrics = prometheus_collector.collect()
         logs = loki_collector.collect()
         traces = tempo_collector.collect()
-        events = k8s_collector.collect()
+        events, resource_data = k8s_collector.collect()
 
-        # Merge metrics/logs/traces/events per resource
-        resource_data = k8s_collector.merge_observability_data(events)
+        # Merge metrics/logs/traces/events per resource (already done in collect)
         # attach metrics per resource type
         for rtype, rmetrics in metrics.items():
             for rname, mdata in rmetrics.items():
