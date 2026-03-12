@@ -45,19 +45,19 @@ def build_rca_prompt(metrics: Dict[str, Any],
 **Analysis Date:** {analysis_date}
 
 ## DETECTED ANOMALIES
-{json.dumps(anomalies, indent=2, cls=DateTimeEncoder)}
+{json.dumps(truncated_anomalies, indent=2, cls=DateTimeEncoder)}
 
 ## METRICS
-{json.dumps(metrics, indent=2, cls=DateTimeEncoder)}
+{json.dumps(truncated_metrics, indent=2, cls=DateTimeEncoder)}
 
 ## LOGS
-{json.dumps(logs, indent=2, cls=DateTimeEncoder)}
+{json.dumps(truncated_logs, indent=2, cls=DateTimeEncoder)}
 
 ## TRACES
-{json.dumps(traces, indent=2, cls=DateTimeEncoder)}
+{json.dumps(truncated_traces, indent=2, cls=DateTimeEncoder)}
 
 ## EVENTS
-{json.dumps(events, indent=2, cls=DateTimeEncoder)}
+{json.dumps(truncated_events, indent=2, cls=DateTimeEncoder)}
 
 ## TASK
 Provide a resource-level Root Cause Analysis report in Markdown:
