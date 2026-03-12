@@ -9,16 +9,16 @@ class TempoCollector(BaseCollector):
     """Collector for Tempo traces."""
 
     def collect(self) -> Dict[str, Any]:
-        log = self.config.get("log", print)
+        log = self.config.log or print
         log.info("Collecting Tempo traces …")
 
-        search_url = f"{self.config['TEMPO_URL']}/api/traces/search"
+        search_url = f"{self.config.TEMPO_URL}/api/traces/search"
         now = datetime.now(timezone.utc)
         start = int((now - timedelta(hours=1)).timestamp() * 1000)
         end = int(now.timestamp() * 1000)
 
         try:
-            resp = requests.get(search_url, params={"start": start, "end": end, "limit": 20}, timeout=self.config.get("HTTP_TIMEOUT_SECONDS", 30))
+            resp = requests.get(search_url, params={"start": start, "end": end, "limit": 20}, timeout=self.config.HTTP_TIMEOUT_SECONDS)
             resp.raise_for_status()
             data = resp.json()
             traces = data.get("traces", [])
