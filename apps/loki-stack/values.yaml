@@ -60,6 +60,11 @@ promtail:
     limits:
       cpu: 200m
       memory: 256Mi
+  # Add tolerations to allow scheduling on control planes
+  tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
   config:
     server:
       http_listen_port: 3101
