@@ -57,6 +57,11 @@ class SlackBot:
         text = event.get("text", "")
         channel = event.get("channel")
         user = event.get("user")
+
+        # Ignore messages from the bot itself to prevent infinite loops
+        if user == self.bot_user_id:
+            return
+
         if self.bot_user_id:
             text = text.replace(f"<@{self.bot_user_id}>", "").strip()
 
@@ -69,7 +74,10 @@ class SlackBot:
                 words = text.split()
                 for i, word in enumerate(words):
                     if word.lower() == rtype and i + 1 < len(words):
-                        resource_name = words[i + 1]
+                        resource_name = words[i + 1].strip('\'"<>')  # Remove quotes and angle brackets
+                        # Skip if resource_name looks like a placeholder or contains bot response patterns
+                        if resource_name in ['<name>', 'name'] or 'data available' in text.lower():
+                            continue
                         resource_info = self.resource_data.get(rtype, {}).get(resource_name)
                         if resource_info:
                             prompt = f"""
@@ -89,6 +97,7 @@ Provide the exact root cause, errors, and remediation commands.
                             response = self.groq_client.analyze(prompt)
                         else:
                             response = f"No data available for {rtype} '{resource_name}'."
+                        break  # Found a resource type, stop checking others
 
         await self.web_client.chat_postMessage(channel=channel, text=f"<@{user}> {response}")
 
