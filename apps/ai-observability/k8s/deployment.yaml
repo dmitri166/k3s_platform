@@ -27,12 +27,62 @@ spec:
           imagePullPolicy: Always
 
           # Inject non-sensitive config from ConfigMap
-          envFrom:
-            - configMapRef:
-                name: ai-observability-config
-
-          # Inject the API keys from the Secret
           env:
+            - name: PROMETHEUS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: PROMETHEUS_URL
+            - name: LOKI_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: LOKI_URL
+            - name: TEMPO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: TEMPO_URL
+            - name: GRAFANA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: GRAFANA_URL
+            - name: GROQ_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: GROQ_MODEL
+            - name: GROQ_MAX_RPM
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: GROQ_MAX_RPM
+            - name: LOOKBACK_HOURS
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: LOOKBACK_HOURS
+            - name: REPORT_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: REPORT_DIR
+            - name: SLACK_CHANNEL
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: SLACK_CHANNEL
+            - name: BOT_USER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: BOT_USER_ID
+            - name: HTTP_TIMEOUT_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-observability-config
+                  key: HTTP_TIMEOUT_SECONDS
             - name: GROQ_API_KEY
               valueFrom:
                 secretKeyRef:
