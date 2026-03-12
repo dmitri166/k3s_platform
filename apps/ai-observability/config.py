@@ -8,6 +8,7 @@ class Config(BaseSettings):
     """Configuration for AI Observability service."""
     
     LOG_LEVEL: str = "INFO"
+    log: object = None  # Will be set at runtime
     
     # API Keys
     GROQ_API_KEY: str = ""

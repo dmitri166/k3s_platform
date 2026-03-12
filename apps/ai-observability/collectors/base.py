@@ -7,7 +7,7 @@ from typing import Any, Dict
 class BaseCollector(ABC):
     """Abstract base class for all collectors."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config):
         self.config = config
 
     @abstractmethod

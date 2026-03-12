@@ -21,17 +21,17 @@ class SlackBot:
                       "statefulset", "daemonset", "service",
                       "ingress", "configmap"]
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config):
         self.config = config
-        self.web_client = AsyncWebClient(token=config["SLACK_BOT_TOKEN"])
+        self.web_client = AsyncWebClient(token=config.SLACK_BOT_TOKEN)
         self.socket_client = SocketModeClient(
-            app_token=config["SLACK_APP_TOKEN"],
+            app_token=config.SLACK_APP_TOKEN,
             web_client=self.web_client,
         )
         self.groq_client = GroqClient(config)
         self.groq_client.initialize()
 
-        self.bot_user_id = config.get("BOT_USER_ID") or os.getenv("BOT_USER_ID", "")
+        self.bot_user_id = config.BOT_USER_ID or os.getenv("BOT_USER_ID", "")
         if not self.bot_user_id:
             logging.warning("BOT_USER_ID not set; mentions may not be stripped correctly.")
 
@@ -41,8 +41,7 @@ class SlackBot:
         self.resource_data = resource_data
 
     async def start(self):
-        log = self.config.get("log", logging.getLogger(__name__))
-        log.info("Starting Slack SocketMode bot...")
+        self.config.log.info("Starting Slack SocketMode bot...")
         self.socket_client.socket_mode_request_listeners.append(self.process)
         await self.socket_client.connect()
 

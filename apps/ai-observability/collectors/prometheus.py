@@ -27,11 +27,11 @@ class PrometheusCollector(BaseCollector):
         },
     }
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config):
         super().__init__(config)
-        self.prometheus_url = config["PROMETHEUS_URL"]
-        self.timeout = config.get("HTTP_TIMEOUT_SECONDS", 30)
-        self.log = config.get("log") or logging.getLogger(__name__)
+        self.prometheus_url = config.PROMETHEUS_URL
+        self.timeout = config.HTTP_TIMEOUT_SECONDS
+        self.log = config.log or logging.getLogger(__name__)
         self.session = requests.Session()
 
     def collect(self) -> Dict[str, Any]:

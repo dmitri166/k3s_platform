@@ -22,24 +22,22 @@ logging.basicConfig(level=logging.INFO,
 log = logging.getLogger("ai-observability")
 
 config = Config()
-
-config_dict = config.model_dump()
-config_dict["log"] = log
+config.log = log
 
 async def main_loop():
-    groq_client = GroqClient(config_dict)
+    groq_client = GroqClient(config)
     groq_client.initialize()
-    slack_bot = SlackBot(config_dict)
+    slack_bot = SlackBot(config)
     await slack_bot.start()
 
     while True:
         analysis_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-        log.info("Starting AI Observability analysis – %s", analysis_date)
+        config.log.info("Starting AI Observability analysis – %s", analysis_date)
 
-        prometheus_collector = PrometheusCollector(config_dict)
-        loki_collector = LokiCollector(config_dict)
-        tempo_collector = TempoCollector(config_dict)
-        k8s_collector = KubernetesAPICollector(config_dict)
+        prometheus_collector = PrometheusCollector(config)
+        loki_collector = LokiCollector(config)
+        tempo_collector = TempoCollector(config)
+        k8s_collector = KubernetesAPICollector(config)
 
         # Collect all data
         metrics = prometheus_collector.collect()
