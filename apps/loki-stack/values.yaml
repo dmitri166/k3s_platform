@@ -65,7 +65,7 @@ promtail:
       http_listen_port: 3101
       grpc_listen_port: 0
     positions:
-      filename: /tmp/promtail-positions.yaml
+      filename: /run/promtail/promtail-positions.yaml
     clients:
       - url: http://loki-stack.monitoring.svc:3100/loki/api/v1/push
     scrape_configs:
