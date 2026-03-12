@@ -62,20 +62,11 @@ spec:
               memory: "512Mi"
               cpu: "500m"
 
-          volumeMounts:
-            - name: reports
-              mountPath: /reports
-
           # Security hardening
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false   # needs write access to /reports
+            readOnlyRootFilesystem: false   # may need write access for temp files/logs
             runAsNonRoot: true
             runAsUser: 1000
             capabilities:
               drop: [ALL]
-
-      volumes:
-        - name: reports
-          persistentVolumeClaim:
-            claimName: ai-observability-reports
