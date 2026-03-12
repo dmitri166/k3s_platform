@@ -107,7 +107,7 @@ spec:
         namespace: monitoring
         chart: opentelemetry-collector
         repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
-        targetRevision: 0.115.1
+        targetRevision: 0.146.1
         valuesPath: apps/opentelemetry-collector/values.yaml
       - name: vault
         namespace: vault
