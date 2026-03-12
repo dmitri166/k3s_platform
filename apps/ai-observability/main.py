@@ -54,7 +54,7 @@ async def main_loop():
 
         slack_bot.update_resource_data(resource_data)
 
-        anomalies = detect_anomalies(metrics, logs, traces, events)
+        anomalies = detect_anomalies(metrics, logs, traces, {"k8s_events": events})
         if anomalies:
             prompt = build_rca_prompt(metrics, logs, traces, events, anomalies, analysis_date)
             analysis = groq_client.analyze(prompt)
