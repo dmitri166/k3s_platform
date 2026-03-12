@@ -45,6 +45,11 @@ loki:
         shared_store: filesystem
       filesystem:
         directory: /tmp/loki/chunks
+  # Add tolerations to allow scheduling on workers
+  tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
 
 promtail:
   enabled: true
@@ -60,9 +65,9 @@ promtail:
       http_listen_port: 3101
       grpc_listen_port: 0
     positions:
-      filename: /tmp/positions.yaml
+      filename: /tmp/promtail-positions.yaml
     clients:
-      - url: http://loki:3100/loki/api/v1/push
+      - url: http://loki-stack.monitoring.svc:3100/loki/api/v1/push
     scrape_configs:
       - job_name: pods
         kubernetes_sd_configs:

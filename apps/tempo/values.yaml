@@ -3,6 +3,11 @@
 
 tempo:
   retention: 24h
+  # Add tolerations to allow scheduling on workers
+  tolerations:
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+    effect: "NoSchedule"
 
 # Extremely strict resource limits to prevent OOM
 resources:

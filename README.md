@@ -12,11 +12,11 @@ This project provides a complete Kubernetes platform that mirrors cloud-native E
 ┌─────────────────────────────────────────────────────────────┐
 │                    Host Machine (16GB RAM)                   │
 ├─────────────────────────────────────────────────────────────┤
-│  VirtualBox VMs (8GB RAM, 10 CPU cores total)               │
+│  VirtualBox VMs (11GB RAM, 8 CPU cores total)               │
 │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ │
-│  │   cp1   │ │   cp2   │ │   cp3   │ │worker1  │ │worker2  │ │
-│  │ 2GB RAM │ │ 2GB RAM │ │ 2GB RAM │ │1.5GB RAM│ │1.5GB RAM│ │
-│  │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │ 1 CPU   │ │ 1 CPU   │ │
+│  │   cp1   │ │   cp2   │ │worker1  │ │worker2  │ │worker3  │ │
+│  │ 2.5GB RAM│ │ 2.5GB RAM│ │ 3GB RAM │ │ 3GB RAM │ │ 2GB RAM │ │
+│  │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │
 │  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -29,7 +29,7 @@ This project provides a complete Kubernetes platform that mirrors cloud-native E
 - **Vagrant**: Infrastructure automation and reproducibility
 - **Terraform**: Infrastructure as Code for platform services
 - **MetalLB**: LoadBalancer implementation for on-premises environments
-- **High Availability**: 3-node control plane with 2 worker nodes
+- **High Availability**: 2-node control plane with 2 worker nodes
 
 ### Platform Services
 - **ArgoCD**: GitOps continuous delivery
@@ -136,11 +136,10 @@ Network: 192.168.56.0/24
 ├── Host: 192.168.56.1
 ├── Control Plane:
 │   ├── cp1: 192.168.56.101
-│   ├── cp2: 192.168.56.102
-│   └── cp3: 192.168.56.103
+│   └── cp2: 192.168.56.102
 └── Workers:
-    ├── worker1: 192.168.56.104
-    └── worker2: 192.168.56.105
+    ├── worker1: 192.168.56.103
+    └── worker2: 192.168.56.104
 ```
 
 ### LoadBalancer IP Pool
@@ -158,9 +157,23 @@ MetalLB IP Range: 192.168.56.240-192.168.56.250
 
 | Node Type | RAM | CPU | Purpose |
 |-----------|-----|-----|---------|
-| Control Plane | 3GB | 2 | HA etcd + API server |
-| Workers | 1GB | 1 | Application workloads |
+| Control Plane | 2.5GB | 2 | HA etcd + API server |
+| Workers | 3GB | 2 | Application workloads |
 | **Total** | **11GB** | **8** | **Complete platform** |
+
+## Taint Configuration
+
+Control plane nodes are tainted with `node-role.kubernetes.io/control-plane=true:NoSchedule`
+via Terraform configuration to prevent workloads from running on them. This ensures:
+- Control planes have dedicated resources for Kubernetes operations
+- Better resource isolation between control plane and workloads
+- Improved performance and stability
+- Predictable resource allocation
+
+## Application Distribution
+
+- **Control Planes**: Cert Manager, Vault (critical components)
+- **Workers**: AI Observability, Monitoring, Ingress, External Secrets, Falco, Velero
 
 ## GitOps Workflow
 
@@ -183,7 +196,8 @@ apps/
 ├── falco/                 # Runtime security
 ├── velero/                # Backup/restore
 ├── vault/                 # Secrets management
-└── external-secrets/      # Secrets synchronization
+├── external-secrets/      # Secrets synchronization
+└── ai-observability/      # Main application
 ```
 
 ## Security
@@ -362,3 +376,28 @@ For support and questions:
 ---
 
 **Note**: This platform is designed for development and testing. For production use, consider additional security hardening, monitoring, and backup strategies.
+
+## Taint Configuration Details
+
+Control plane nodes are tainted with `node-role.kubernetes.io/control-plane=true:NoSchedule` via Terraform configuration. This ensures:
+- Control planes have dedicated resources for Kubernetes operations
+- Better resource isolation between control plane and workloads
+- Improved performance and stability
+- Predictable resource allocation
+
+Applications that need to run on workers must include tolerations:
+```yaml
+tolerations:
+- key: "node-role.kubernetes.io/control-plane"
+  operator: "Exists"
+  effect: "NoSchedule"
+```
+
+## Resource Allocation Summary
+
+- **Control Planes**: 2.5GB RAM, 2 CPUs each (5GB total)
+- **Workers**: 3GB RAM, 2 CPUs each (6GB total)
+- **Total**: 11GB RAM, 8 CPUs
+- **Host RAM available**: 5GB
+
+This configuration provides optimal performance for AI/ML workloads while maintaining system stability.

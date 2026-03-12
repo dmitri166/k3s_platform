@@ -35,3 +35,9 @@ resources:
   limits:
     cpu: 500m
     memory: 256Mi
+
+# Add tolerations to allow scheduling on workers
+tolerations:
+- key: "node-role.kubernetes.io/control-plane"
+  operator: "Exists"
+  effect: "NoSchedule"

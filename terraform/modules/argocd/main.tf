@@ -38,4 +38,3 @@ resource "helm_release" "argocd" {
     kubernetes_namespace.argocd
   ]
 }
-

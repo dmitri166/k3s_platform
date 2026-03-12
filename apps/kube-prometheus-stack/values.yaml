@@ -24,15 +24,19 @@ prometheus:
               matchExpressions:
                 - key: node-role.kubernetes.io/control-plane
                   operator: DoesNotExist
-         
-  storageSpec:
-    volumeClaimTemplate:
-      spec:
-        storageClassName: "local-path"
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 4Gi
+    # Add tolerations to allow scheduling on workers
+    tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "local-path"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 4Gi
 
 alertmanager:
   enabled: true
@@ -53,7 +57,7 @@ alertmanager:
   extraVolumeMounts:
   - name: smtp-secret
     mountPath: /etc/alertmanager/secrets
-  
+
   additionalConfig:
     global:
       smtp_smarthost: 'smtp.gmail.com:587'

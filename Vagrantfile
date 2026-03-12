@@ -43,13 +43,13 @@ Vagrant.configure("2") do |config|
   else
     raise "K3S_NETWORK_MODE must be either 'bridged' or 'hostonly'."
   end
-  cp_memory      = ENV.fetch("CP_MEMORY_MB", "3072")
+  cp_memory      = ENV.fetch("CP_MEMORY_MB", "2560")
   cp_cpus        = ENV.fetch("CP_CPUS", "2")
-  worker_memory  = ENV.fetch("WORKER_MEMORY_MB", "1024")
-  worker_cpus    = ENV.fetch("WORKER_CPUS", "1")
+  worker_memory  = ENV.fetch("WORKER_MEMORY_MB", "3072")
+  worker_cpus    = ENV.fetch("WORKER_CPUS", "2")
 
   cp_ip = ->(i) { "#{network_prefix}.#{100 + i}" }
-  worker_ip = ->(i) { "#{network_prefix}.#{103 + i}" }
+  worker_ip = ->(i) { "#{network_prefix}.#{102 + i}" }
 
   config.vm.box = vm_box
   config.vm.synced_folder ".", "/vagrant"
@@ -94,8 +94,8 @@ EOF
     sysctl --system >/dev/null
   SHELL
 
-  # Control Plane Nodes (3-node HA)
-  (1..3).each do |i|
+  # Control Plane Nodes (2-node HA)
+  (1..2).each do |i|
     config.vm.define "cp#{i}" do |cp|
       cp.vm.hostname = "cp#{i}"
       if network_mode == "bridged"
@@ -117,23 +117,6 @@ EOF
       end
 
       cp.vm.provision "shell", inline: common_provision
-
-      # Build and import AI Observability image (only on cp1)
-      if i == 1
-        cp.vm.provision "shell", inline: <<-SHELL
-          set -euo pipefail
-          cd /vagrant/apps/ai-observability
-          if [ -f Dockerfile ]; then
-            echo "Building AI Observability image..."
-            sudo docker build -t ai-observability:local .
-            echo "Importing AI Observability image to k3s..."
-            sudo docker save ai-observability:local | sudo k3s ctr images import -
-            echo "AI Observability image built and imported successfully"
-          else
-            echo "Dockerfile not found, skipping AI Observability image build"
-          fi
-        SHELL
-      end
 
       cp.vm.provision "shell", inline: <<-SHELL
         set -euo pipefail
@@ -157,7 +140,8 @@ EOF
             --flannel-iface "$K3S_IFACE" \
             --write-kubeconfig-mode 644 \
             --disable servicelb \
-            --disable traefik
+            --disable traefik \
+            --node-taint node-role.kubernetes.io/control-plane=true:NoSchedule
 
           # Share token for joining members.
           cat /var/lib/rancher/k3s/server/node-token >/vagrant/scripts/k3s-token.txt
@@ -190,7 +174,8 @@ EOF
             --advertise-address "$NODE_IP" \
             --flannel-iface "$K3S_IFACE" \
             --disable servicelb \
-            --disable traefik
+            --disable traefik \
+            --node-taint node-role.kubernetes.io/control-plane=true:NoSchedule
         fi
       SHELL
     end
