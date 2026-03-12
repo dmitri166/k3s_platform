@@ -1,3 +1,8 @@
+import requests
+from datetime import datetime, timezone, timedelta
+from .base import BaseCollector
+from typing import Dict, Any
+
 class TempoCollector(BaseCollector):
 
     def collect(self) -> Dict[str, Any]:
