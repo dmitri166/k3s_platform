@@ -2,10 +2,10 @@ import requests
 from typing import Any, Dict
 from datetime import datetime, timezone
 
-def annotate_grafana(title: str, text: str, tags: list, config: Dict[str, Any]):
-    grafana_url = config.get('GRAFANA_URL')
-    api_key = config.get('GRAFANA_API_KEY')
-    log = config.get('log', print)
+def annotate_grafana(title: str, text: str, tags: list, config):
+    grafana_url = getattr(config, 'GRAFANA_URL', None)
+    api_key = getattr(config, 'GRAFANA_API_KEY', None)
+    log = getattr(config, 'log', print)
 
     if not grafana_url or not api_key:
         log.warning("Grafana URL or API key not configured, skipping annotation.")
