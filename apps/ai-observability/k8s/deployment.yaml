@@ -19,7 +19,7 @@ spec:
         effect: "NoSchedule"
       containers:
       - name: ai-observability
-        image: mitri166/k3s-ai-observability:latest
+        image: dmitri166/k3s-ai-observability:latest
         ports:
         - containerPort: 8000
         env:
