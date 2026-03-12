@@ -31,6 +31,7 @@ class Config(BaseSettings):
 
     # Slack
     SLACK_CHANNEL: str = "#alerts"
+    BOT_USER_ID: str = ""
 
     class Config:
         env_file = ".env"
