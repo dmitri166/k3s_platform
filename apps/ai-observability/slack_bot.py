@@ -60,8 +60,7 @@ class SlackBot:
         if self.bot_user_id:
             text = text.replace(f"<@{self.bot_user_id}>", "").strip()
 
-        log = self.config.get("log", logging.getLogger(__name__))
-        log.info("Received mention: %s from %s", text, user)
+        self.config.log.info("Received mention: %s from %s", text, user)
 
         response = "I couldn't find the requested resource. Ask like: 'Why did pod <name> fail?'"
 
@@ -94,7 +93,7 @@ Provide the exact root cause, errors, and remediation commands.
         await self.web_client.chat_postMessage(channel=channel, text=f"<@{user}> {response}")
 
     async def send_alert(self, message: str, report: str):
-        channel = self.config.get("SLACK_CHANNEL", "#alerts")
+        channel = self.config.SLACK_CHANNEL
         try:
             await self.web_client.chat_postMessage(channel=channel, text=message)
             await self.web_client.chat_postMessage(channel=channel, text=f"Full RCA Report:\n{report[:4000]}")
