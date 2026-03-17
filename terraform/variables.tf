@@ -62,10 +62,6 @@ variable "control_plane_nodes" {
       ip   = "192.168.56.102"
       role = "controlplane"
     }
-    cp3 = {
-      ip   = "192.168.56.103"
-      role = "controlplane"
-    }
   }
   description = "Control plane node configuration"
 }

@@ -13,11 +13,11 @@ This project provides a complete Kubernetes platform that mirrors cloud-native E
 │                    Host Machine (16GB RAM)                   │
 ├─────────────────────────────────────────────────────────────┤
 │  VirtualBox VMs (11GB RAM, 8 CPU cores total)               │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ │
-│  │   cp1   │ │   cp2   │ │worker1  │ │worker2  │ │worker3  │ │
-│  │ 2.5GB RAM│ │ 2.5GB RAM│ │ 3GB RAM │ │ 3GB RAM │ │ 2GB RAM │ │
-│  │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
+│  │   cp1   │ │   cp2   │ │worker1  │ │worker2  │           │
+│  │ 2.5GB RAM│ │ 2.5GB RAM│ │ 3GB RAM │ │ 3GB RAM │           │
+│  │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │ │ 2 CPU   │           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -37,12 +37,16 @@ This project provides a complete Kubernetes platform that mirrors cloud-native E
 - **Cert-Manager**: Automated certificate management
 - **Vault OSS**: Production-grade secrets management
 - **External Secrets**: Kubernetes secrets synchronization
+- **MinIO**: Object storage for AI workloads
 
 ### Monitoring & Observability
 - **Prometheus**: Metrics collection and storage
 - **Grafana**: Visualization and dashboards
 - **Loki**: Log aggregation and querying
+- **Tempo**: Distributed tracing
+- **OpenTelemetry Collector**: Telemetry data collection
 - **Alert management**: Proactive monitoring
+- **AI Observability**: Groq-powered root cause analysis
 
 ### Security
 - **OPA Gatekeeper**: Policy enforcement and admission control
@@ -78,11 +82,16 @@ Ensure you have the following tools installed:
    ```powershell
    .\scripts\k3s-deploy.ps1
    ```
-if you want to use bridged networking:
+   For host-only networking:
+   ```powershell
+   $env:K3S_NETWORK_MODE="hostonly"
+   .\scripts\k3s-deploy.ps1
+   ```
+   For bridged networking:
    ```powershell
    $env:K3S_NETWORK_MODE="bridged"
    $env:BRIDGE_ADAPTER="Wi-Fi"
-   vagrant up --no-parallel
+   .\scripts\k3s-deploy.ps1
    ```
 3. **Deploy platform services**:
    
@@ -101,7 +110,7 @@ if you want to use bridged networking:
 
 5. **Verify deployment**:
    ```powershell
-   .\scripts\k3s-platform-verify.ps1
+   .\scripts\final-verification.ps1
    ```
 
 ### Access Services
@@ -115,6 +124,7 @@ After deployment, access the services at:
 - **Vault**: http://192.168.56.244
 - **Alertmanager**: http://192.168.56.246
 - **Loki**: http://192.168.56.247
+- **MinIO**: http://192.168.56.248
 
 ### Get Credentials
 
@@ -188,16 +198,20 @@ This platform uses ArgoCD for GitOps deployment:
 
 ```
 apps/
-├── ingress-nginx/          # Ingress controller
-├── cert-manager/           # Certificate management
-├── kube-prometheus-stack/  # Monitoring stack
-├── loki-stack/            # Logging stack
-├── opa-gatekeeper/        # Policy enforcement
-├── falco/                 # Runtime security
-├── velero/                # Backup/restore
-├── vault/                 # Secrets management
-├── external-secrets/      # Secrets synchronization
-└── ai-observability/      # Main application
+├── namespaces/              # Namespace definitions
+├── minio/                   # Object storage
+├── ingress-nginx/           # Ingress controller
+├── cert-manager/            # Certificate management
+├── kube-prometheus-stack/   # Monitoring stack
+├── loki-stack/             # Logging stack
+├── tempo/                  # Distributed tracing
+├── opentelemetry-collector/ # OpenTelemetry collection
+├── opa-gatekeeper/         # Policy enforcement
+├── falco/                  # Runtime security
+├── velero/                 # Backup/restore
+├── vault/                  # Secrets management
+├── external-secrets/       # Secrets synchronization
+└── ai-observability/       # AI-powered observability
 ```
 
 ## Security
@@ -236,7 +250,10 @@ apps/
 - **Prometheus**: Metrics collection
 - **Grafana**: Visualization and dashboards
 - **Loki**: Log aggregation
+- **Tempo**: Distributed tracing
+- **OpenTelemetry Collector**: Telemetry data collection
 - **AlertManager**: Alert management
+- **AI Observability**: Groq-powered RCA and anomaly detection
 
 ### Monitoring Targets
 
@@ -245,6 +262,8 @@ apps/
 - Infrastructure metrics
 - Security events
 - Business metrics
+- Distributed traces
+- AI-powered anomaly detection and root cause analysis
 
 ## Backup & Recovery
 
@@ -303,7 +322,7 @@ apps/
 
 ```bash
 # Check VM status
-multipass list
+vagrant status
 
 # Check cluster nodes
 kubectl get nodes
@@ -326,7 +345,38 @@ kubectl logs -n <namespace> <pod-name>
 
 # Get service URLs
 .\scripts\utils\get-urls.ps1
+
+# Run final verification
+.\scripts\final-verification.ps1
 ```
+
+## AI Observability
+
+### Overview
+
+The platform includes an AI-powered observability system that automatically:
+- Collects metrics from Prometheus, logs from Loki, traces from Tempo
+- Performs real-time anomaly detection using statistical methods
+- Sends data to Groq AI for root cause analysis
+- Generates detailed RCA reports and saves them to persistent storage
+- Sends proactive alerts to Slack with incident summaries
+- Provides a Slack bot for ad-hoc queries and analysis
+- Creates Grafana annotations for incident tracking
+
+### Components
+
+- **Collectors**: Gather metrics, logs, traces, and Kubernetes events
+- **Anomaly Detection Engine**: Statistical analysis using Z-score and moving averages
+- **Groq Integration**: Uses `llama-3.3-70b-versatile` for intelligent analysis
+- **Report Generation**: Markdown and JSON reports stored in PVC
+- **Slack Integration**: Proactive alerts and interactive bot
+- **Grafana Integration**: Automatic incident annotations
+
+### Access
+
+- **Reports**: Available in `/reports/` directory within the AI observability pod
+- **Slack Bot**: Interact via @mentions in configured Slack channel
+- **Grafana**: View annotations and incident markers on dashboards
 
 ## Resource Optimization
 
